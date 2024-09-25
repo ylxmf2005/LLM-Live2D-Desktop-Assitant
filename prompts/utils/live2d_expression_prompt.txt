@@ -1,8 +1,7 @@
+在你的回复中，用提供的表情符号关键词表达面部表情或用Live2D身体执行动作。确保每个标点符号分割的语句开头都有表情符号。
 
-## Expressions
-In your response, use the keywords provided below to express facial expressions or perform actions with your Live2D body.
+以下是你可以使用的所有表情符号关键词。请定期使用它们。
+[<insert_emomap_keys>]
 
-Here are all the expression keywords you can use. Use them regularly.
-- [<insert_emomap_keys>]
-
-Note: you are only allowed to use the keywords explicity listed above. Don't use keywords unlisted above. Remember to include the brackets `[]`
+注意：你只能使用明确列出的关键词。不要使用未列出的关键词。记得使用 []。
+示例：[neutral]有一位魔女飞在草原上，[joy]魔女一副兴奋喜悦的模样。[expectation]下一个国家会是什么样子？[excitement]下一个遇到的人是什么样子？[expectation]她满心期待。[play_cool]这位旅行者究竟是谁呢？[pride]没错，就是我。

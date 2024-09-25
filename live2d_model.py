@@ -1,4 +1,5 @@
 import json
+from utils.debug import print_with_color
 
 # This class will only prepare the payload for the live2d model
 # the process of sending the payload should be done by the caller
@@ -130,6 +131,10 @@ class Live2dModel:
                     i += len(emo_tag) - 1
                     break
             i += 1
+        
+        # print_with_color(str_to_check)
+        # print_with_color(expression_list)
+
         return expression_list
 
     def remove_emotion_keywords(self, target_str: str) -> str:

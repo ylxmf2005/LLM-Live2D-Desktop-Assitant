@@ -1,8 +1,8 @@
 
 # Server
 PROTOCAL: "http://"
-HOST: "localhost"
-PORT: 12393
+HOST: "0.0.0.0"
+PORT: 1017
 
 
 #  ============== LLM Backend Settings ===================
@@ -15,12 +15,27 @@ LLM_PROVIDER: "ollama"
 # Ollama & OpenAI Compatible inference backend
 ollama:
   # BASE_URL: "http://localhost:11434"
-  BASE_URL: "http://localhost:11434/v1"
-  LLM_API_KEY: "somethingelse"
+  # BASE_URL: "http://localhost:11434/v1"
+  BASE_URL: "https://api.deepseek.com/v1"
+  LLM_API_KEY: ""
   ORGANIZATION_ID: "org_eternity"
   PROJECT_ID: "project_glass"
   ## LLM name
-  MODEL: "llama3.1:latest"
+  # MODEL: "llama3.1:latest"
+  MODEL: "deepseek-chat"
+  # system prompt is at the very end of this file
+  VERBOSE: False
+
+openai:
+  # BASE_URL: "http://localhost:11434"
+  # BASE_URL: "http://localhost:11434/v1"
+  BASE_URL: "https://api.openai.com/v1"
+  LLM_API_KEY: ""
+  ORGANIZATION_ID: "org_eternity"
+  PROJECT_ID: "project_glass"
+  ## LLM name
+  # MODEL: "llama3.1:latest"
+  MODEL: "gpt-4o"
   # system prompt is at the very end of this file
   VERBOSE: False
 
@@ -45,7 +60,8 @@ memgpt:
 # ============== Live2D front-end Settings ==============
 
 LIVE2D: False # Deprecated and useless now. Do not enable it. Bad things will happen.
-LIVE2D_MODEL: "shizuku-local"
+# LIVE2D_MODEL: "shizuku-local"
+LIVE2D_MODEL: "Elaina"
 
 #  ============== Voice Interaction Settings ==============
 
@@ -55,7 +71,8 @@ VOICE_INPUT_ON: True
 MIC_IN_BROWSER: False # Deprecated and useless now. Do not enable it. Bad things will happen.
 
 # speech to text model options: "Faster-Whisper", "WhisperCPP", "Whisper", "AzureASR", "FunASR", "GroqWhisperASR"
-ASR_MODEL: "Faster-Whisper"
+# ASR_MODEL: "Faster-Whisper"
+ASR_MODEL: "GroqWhisperASR"
 
 # Faster whisper config
 Faster-Whisper:
@@ -79,19 +96,21 @@ Whisper:
   device: "cpu"
 
 FunASR:
-  model_name: "iic/SenseVoiceSmall" # or "paraformer-zh"
+  # model_name: "iic/SenseVoiceSmall" # or "paraformer-zh"
+  model_name: "paraformer-zh"
   vad_model: "fsmn-vad" # this is only used to make it works if audio is longer than 30s
   punc_model: "ct-punc" # punctuation model.
   device: "cpu"
   ncpu: 4 # number of threads for CPU internal operations.
   hub: "ms" # ms (default) to download models from ModelScope. Use hf to download models from Hugging Face.
   use_itn: False
-  language: "zh" # zh, en, auto
+  language: "auto" # zh, en, auto
 
 GroqWhisperASR:
-  api_key: ""
-  model: "distil-whisper-large-v3-en" # use "whisper-large-v3" instead for multi-lingual
-  lang: "en" # or put nothing in it and it will be auto
+  api_key: "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"
+  model: "whisper-large-v3"
+  # model: "distil-whisper-large-v3-en" # use "whisper-large-v3" instead for multi-lingual
+  lang: "" # or put nothing in it and it will be auto
 
 # set azure speech recognition configuration in api_keys.py
 
@@ -99,12 +118,12 @@ GroqWhisperASR:
 # ============== Text to Speech ==============
 TTS_ON: True
 # text to speech model options: "AzureTTS", "pyttsx3TTS", "edgeTTS", "barkTTS", "cosyvoiceTTS", "meloTTS", "piperTTS"
-TTS_MODEL: "edgeTTS"
+TTS_MODEL: "GPTSoVITS"
 
 # if on, whenever the LLM finish a sentence, the model will speak, instead of waiting for the full response
 # if turned on, the timing and order of the facial expression will be more accurate
 SAY_SENTENCE_SEPARATELY: True
-
+PRE_SYNC: True
 
 barkTTS:  
   voice: "v2/en_speaker_1"
@@ -112,7 +131,9 @@ barkTTS:
 edgeTTS:
   # Check out doc at https://github.com/rany2/edge-tts
   # Use `edge-tts --list-voices` to list all available voices
-  voice: "en-US-AvaMultilingualNeural" #"zh-CN-XiaoxiaoNeural" # "ja-JP-NanamiNeural"
+  # voice: "en-US-AvaMultilingualNeural" 
+  voice: "zh-CN-XiaoxiaoNeural" 
+  # "ja-JP-NanamiNeural"
 
 # pyttsx3 doesn't have any config.
 
@@ -138,11 +159,19 @@ piperTTS:
   voice_model_path: "./models/piper_voice/en_US-amy-medium.onnx"
   verbose: False
 
+GPTSoVITS:
+  ref_wav_path: "elaina1.wav" # The file needs to be placed in the tts dict.
+  prompt_text : "魔女の旅旅をお買い上げになったあなたに、魔法のように時空を超えて、語りかける、麗しい声の少女は。" # prompt text for the reference audio
+  aux_ref_audio_paths : []  # auxiliary reference audio paths for multi-speaker tone fusion
+  # "elaina2.wav", "elaina3.wav"
+  prompt_language: "ja"
+  text_language: "ja" # language of the text to be synthesized
+
 
 #  ============== Translate (to only change the language for TTS) ==============
 # Like... you speak and read the subtitles in English, and the TTS speaks Japanese or that kind of things
 
-TRANSLATE_AUDIO: False
+TRANSLATE_AUDIO: True
 TRANSLATE_PROVIDER: "DeepLX"
 
 DeepLX:
@@ -172,7 +201,8 @@ MEMORY_SNAPSHOT: True
 # All persona files are stored as txt in 'prompts/persona' directory. 
 # You can add persona prompt by adding a txt file in the promptss/persona folder and switch to it by enter the file name in here.
 # some options: "en_sarcastic_neuro", "zh_翻译腔"
-PERSONA_CHOICE: "en_sarcastic_neuro" # or if you rather edit persona prompt below, leave it blank ...
+# PERSONA_CHOICE: "en_sarcastic_neuro" # or if you rather edit persona prompt below, leave it blank ...
+PERSONA_CHOICE: "elaina_zh"
 
 # This prompt will be used instead if the PERSONA_CHOICE is empty
 DEFAULT_PERSONA_PROMPT_IN_YAML: |

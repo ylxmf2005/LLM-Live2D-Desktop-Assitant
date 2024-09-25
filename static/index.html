@@ -18,8 +18,6 @@
     <!-- <script src="https://cdn.jsdelivr.net/gh/RaSan147/pixi-live2d-display@v0.5.0-ls-7/dist/index.min.js"></script> -->
     <script src="libs/index.min.js"></script>
 
-
-
     <script src="TaskQueue.js"></script>
 
     <!-- Voice Activation Detection -->
@@ -61,6 +59,10 @@
         let fullResponse = ""; // full response from the server in one conversation chain
 
         const stateDisplay = document.getElementById('stateDisplay');
+
+        live2dModule.init().then(() => {
+            live2dModule.loadModel(null);
+        });
 
         function updateStateDisplay() {
             stateDisplay.textContent = `Status: ${state}`;
@@ -141,7 +143,7 @@
         const interruptBtn = document.getElementById('interruptBtn');
         const micToggle = document.getElementById('micToggle');
 
-        wsUrl.value = "ws://127.0.0.1:12393/client-ws";
+        wsUrl.value = "ws://127.0.0.1:1017/client-ws";
         // if running on server
         if (window.location.protocol.startsWith("http")) {
             console.log("Running on server");
@@ -199,6 +201,7 @@
                             break;
                         case "conversation-chain-end":
                             setState("idle");
+                            setExpression(0);
                             if (!voiceInterruptionOn) {
                                 start_mic();
                             }
@@ -220,10 +223,10 @@
                     }
                     break;
                 case "set-model":
-                    console.log("set-model: ", message.text);
-                    live2dModule.init().then(() => {
-                        live2dModule.loadModel(message.text);
-                    });
+                    // console.log("set-model: ", message.text);
+                    // live2dModule.init().then(() => {
+                    //     live2dModule.loadModel(message.text);
+                    // });
                     break;
                 case "listExpressions":
                     console.log(listSupportedExpressions());
@@ -344,6 +347,41 @@
 
         // Initialize WebSocket connection
         connectWebSocket();
+
+        // Triple-click functionality to toggle hidden elements
+        let clickCount = 0;
+        let clickTimer = null;
+
+        function handleClick() {
+            clickCount++;
+
+            if (clickCount === 1) {
+                // Start a timer
+                clickTimer = setTimeout(() => {
+                    clickCount = 0;
+                }, 500); 
+            }
+
+            if (clickCount === 3) {
+                // Triple click detected
+                toggleHiddenElements();
+
+                // Reset click count
+                clickCount = 0;
+                clearTimeout(clickTimer);
+                clickTimer = null;
+            }
+        }
+
+        function toggleHiddenElements() {
+            // Toggle the 'hidden' class on the elements
+            document.querySelector('.top-left').classList.toggle('hidden');
+            document.querySelector('.bottom-container').classList.toggle('hidden');
+        }
+
+        // Attach the click handler to the canvas
+        document.getElementById('canvas').addEventListener('click', handleClick);
+
     </script>
 </body>
 

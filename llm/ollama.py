@@ -83,7 +83,6 @@ class LLM(LLMInterface):
         print(" -- System: " + self.system)
 
 
-
     def chat_iter(self, prompt:str) -> Iterator[str]:
 
         self.memory.append(

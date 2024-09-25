@@ -6,7 +6,7 @@ import queue
 from typing import Callable, Iterator, Optional
 from fastapi import WebSocket
 import numpy as np
-
+from concurrent.futures import ThreadPoolExecutor
 from asr.asr_factory import ASRFactory
 from asr.asr_interface import ASRInterface
 from live2d_model import Live2dModel
@@ -307,8 +307,10 @@ class OpenLLMVTuberMain:
         """
         full_response = ""
         if self.config.get("SAY_SENTENCE_SEPARATELY", True):
-            full_response = self.speak_by_sentence_chain(chat_completion)
-        else:  # say the full response at once? how stupid
+            full_response = self.speak_by_sentence_chain(
+                chat_completion, pre_sync=self.config.get("PRE_SYNC", False)
+            )
+        else:
             full_response = ""
             for char in chat_completion:
                 if not self._continue_exec_flag.is_set():
@@ -318,7 +320,14 @@ class OpenLLMVTuberMain:
                 print(char, end="")
                 full_response += char
             print("\n")
-            filename = self._generate_audio_file(full_response, "temp")
+
+            tts_target_sentence = full_response
+            if self.translator and self.config.get("TRANSLATE_AUDIO", False):
+                print("Translating...")
+                tts_target_sentence = self.translator.translate(tts_target_sentence)
+                print(f"Translated: {tts_target_sentence}")
+
+            filename = self._generate_audio_file(tts_target_sentence, "temp")
 
             if self._continue_exec_flag.is_set():
                 self._play_audio_file(
@@ -385,135 +394,164 @@ class OpenLLMVTuberMain:
         except Exception as e:
             print(f"Error playing the audio file {filepath}: {e}")
 
-    def speak_by_sentence_chain(self, chat_completion: Iterator[str]) -> str:
+    def speak_by_sentence_chain(self, chat_completion: Iterator[str], pre_sync: bool = False) -> str:
         """
         Generate and play the chat completion sentences one by one using the TTS engine.
-        Now properly handles interrupts in a multi-threaded environment using the existing _continue_exec_flag.
+        Now properly handles interrupts in a multi-threaded environment using the existing  _continue_exec_flag.
+
+        Parameters:
+        - chat_completion (Iterator[str]): The chat completion to speak
+        - pre_sync (bool): If True, preprocesses and generates audio files asynchronously before    playback.
+                           If False, processes and plays back sentences one at a time.
+
+        Returns:
+        - str: The full response from the LLM
         """
-        task_queue = queue.Queue()
-        full_response = [""]  # Use a list to store the full response
+        full_response = [""]  
         interrupted_error_event = threading.Event()
 
-        def producer_worker():
-            try:
-                index = 0
-                sentence_buffer = ""
+        sentence_queue = queue.Queue()
+        audio_queue = queue.Queue()
+        index = 0
 
+        def producer_worker():
+            nonlocal index
+            try:
+                sentence_buffer = ""
                 for char in chat_completion:
                     if not self._continue_exec_flag.is_set():
                         raise InterruptedError("Producer interrupted")
-
                     if char:
                         print(char, end="", flush=True)
                         sentence_buffer += char
                         full_response[0] += char
-                        if self.is_complete_sentence(char):
+                        check_result = self.check(sentence_buffer)
+                        if check_result == "sing-mode":
+                            pass
+                        elif check_result:
                             if self.verbose:
                                 print("\n")
                             if not self._continue_exec_flag.is_set():
                                 raise InterruptedError("Producer interrupted")
-                            tts_target_sentence = sentence_buffer
-
-                            if self.translator and self.config.get(
-                                "TRANSLATE_AUDIO", False
-                            ):
-                                print("Translating...")
-                                tts_target_sentence = self.translator.translate(
-                                    tts_target_sentence
-                                )
-                                print(f"Translated: {tts_target_sentence}")
-
-                            audio_filepath = self._generate_audio_file(
-                                tts_target_sentence, file_name_no_ext=f"temp-{index}"
-                            )
-
-                            if not self._continue_exec_flag.is_set():
-                                raise InterruptedError("Producer interrupted")
-                            audio_info = {
-                                "sentence": sentence_buffer,
-                                "audio_filepath": audio_filepath,
-                            }
-                            task_queue.put(audio_info)
+                            sentence_queue.put((index, sentence_buffer))
                             index += 1
                             sentence_buffer = ""
 
-                # Handle any remaining text in the buffer
                 if sentence_buffer:
                     if not self._continue_exec_flag.is_set():
                         raise InterruptedError("Producer interrupted")
                     print("\n")
-                    audio_filepath = self._generate_audio_file(
-                        sentence_buffer, file_name_no_ext=f"temp-{index}"
-                    )
-                    audio_info = {
-                        "sentence": sentence_buffer,
-                        "audio_filepath": audio_filepath,
-                    }
-                    task_queue.put(audio_info)
+                    sentence_queue.put((index, sentence_buffer))
+                    index += 1
 
             except InterruptedError:
                 print("\nProducer interrupted")
                 interrupted_error_event.set()
-                return  # Exit the function
+                return
             except Exception as e:
                 print(
-                    f"Producer error: Error generating audio for sentence: '{sentence_buffer}'.\n{e}",
+                    f"Producer error: Error processing sentence.\n{e}",
                     "Producer stopped\n",
                 )
                 return
             finally:
-                task_queue.put(None)  # Signal end of production
+                sentence_queue.put((None, None))  
+
+        def tts_worker():
+            try:
+                while True:
+                    if not self._continue_exec_flag.is_set():
+                        raise InterruptedError("TTS worker interrupted")
+                    idx, sentence = sentence_queue.get()
+                    if idx is None:
+                        sentence_queue.put((None, None)) 
+                        break
+
+                    tts_target_sentence = sentence
+
+                    if self.translator and self.config.get("TRANSLATE_AUDIO", False):
+                        print("Translating...")
+                        tts_target_sentence = self.translator.translate(
+                            tts_target_sentence
+                        )
+                        print(f"Translated: {tts_target_sentence}")
+
+                    audio_filepath = self._generate_audio_file(
+                        tts_target_sentence, file_name_no_ext=f"temp-{idx}"
+                    )
+
+                    if not self._continue_exec_flag.is_set():
+                        raise InterruptedError("TTS worker interrupted")
+
+                    audio_info = {
+                        "index": idx,
+                        "sentence": sentence,
+                        "audio_filepath": audio_filepath,
+                    }
+                    audio_queue.put(audio_info)
+            except InterruptedError:
+                print("\nTTS worker interrupted")
+                interrupted_error_event.set()
+                return
+            except Exception as e:
+                print(
+                    f"TTS worker error: Error generating audio for sentence.\n{e}",
+                    "TTS worker stopped\n",
+                )
+                return
+            finally:
+                audio_queue.put(None)  # Signal the consumer that we are done
 
         def consumer_worker():
-            heard_sentence = ""
-
-            while True:
-
-                try:
+            expected_index = 0
+            audio_buffer = {}
+            try:
+                while True:
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("😱Consumer interrupted")
-
-                    audio_info = task_queue.get(
-                        timeout=0.1
-                    )  # Short timeout to check for interrupts
+                        raise InterruptedError("Consumer interrupted")
+                    audio_info = audio_queue.get()
                     if audio_info is None:
-                        break  # End of production
-                    if audio_info:
-                        heard_sentence += audio_info["sentence"]
+                        # No more audio
+                        break
+                    idx = audio_info["index"]
+                    audio_buffer[idx] = audio_info
+
+                    # Play sentences in order
+                    while expected_index in audio_buffer:
+                        info = audio_buffer.pop(expected_index)
+                        if self.verbose:
+                            print("\n")
                         self._play_audio_file(
-                            sentence=audio_info["sentence"],
-                            filepath=audio_info["audio_filepath"],
+                            sentence=info["sentence"],
+                            filepath=info["audio_filepath"],
                         )
-                    task_queue.task_done()
-                except queue.Empty:
-                    continue  # No item available, continue checking for interrupts
-                except InterruptedError as e:
-                    print(f"\n{str(e)}, stopping worker threads")
-                    interrupted_error_event.set()
-                    return  # Exit the function
-                except Exception as e:
-                    print(
-                        f"Consumer error: Error playing sentence '{audio_info['sentence']}'.\n {e}"
-                    )
-                    continue
+                        expected_index += 1
+
+            except InterruptedError:
+                print("\nConsumer interrupted")
+                interrupted_error_event.set()
+                return
+            except Exception as e:
+                print(
+                    f"Consumer error: Error playing audio.\n{e}",
+                    "Consumer stopped\n",
+                )
+                return
 
         producer_thread = threading.Thread(target=producer_worker)
+        tts_thread = threading.Thread(target=tts_worker)
         consumer_thread = threading.Thread(target=consumer_worker)
 
         producer_thread.start()
+        tts_thread.start()
         consumer_thread.start()
 
         producer_thread.join()
+        tts_thread.join()
         consumer_thread.join()
 
-        if interrupted_error_event.is_set():
-            self._interrupt_post_processing()
-            raise InterruptedError(
-                "Conversation chain interrupted: consumer model interrupted"
-            )
-
-        print("\n\n --- Audio generation and playback completed ---")
         return full_response[0]
+
 
     def interrupt(self, heard_sentence: str = "") -> None:
         """Set the interrupt flag to stop the conversation chain.
@@ -535,12 +573,15 @@ class OpenLLMVTuberMain:
         if not self._continue_exec_flag.is_set():
             raise InterruptedError("Conversation chain interrupted: checked")
 
-    def is_complete_sentence(self, text: str):
+    def check(self, text: str):
         """
-        Check if the text is a complete sentence.
+        Check if the text is a complete sentence / {"song_name" : ""}.
         text: str
             the text to check
         """
+
+        if ("song_name" in text and text.endswith("}")):
+            return "sing-mode"
 
         white_list = [
             "...",

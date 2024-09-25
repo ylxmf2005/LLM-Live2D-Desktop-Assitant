@@ -1,9 +1,9 @@
 body {
-  background-image: url("./bg/cityscape.jpeg");
+  /* background-image: url("./bg/ceiling-window-room-night.jpeg");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
-  background-attachment: fixed;
+  background-attachment: fixed; */
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -28,7 +28,7 @@ body {
 }
 
 #wsStatus.connected {
-    background-color: #4caf50;
+  background-color: #4caf50;
 }
 
 #stateDisplay {
@@ -105,4 +105,8 @@ canvas {
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.hidden {
+  display: none;
 }

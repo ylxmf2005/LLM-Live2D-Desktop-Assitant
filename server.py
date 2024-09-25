@@ -221,11 +221,6 @@ class WebSocketServer:
 
     def _mount_static_files(self):
         """Mounts static file directories."""
-        self.app.mount(
-            "/live2d-models",
-            StaticFiles(directory="live2d-models"),
-            name="live2d-models",
-        )
         self.app.mount("/", StaticFiles(directory="./static", html=True), name="static")
 
     def run(self, host: str = "127.0.0.1", port: int = 8000, log_level: str = "info"):
@@ -250,7 +245,7 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     config["LIVE2D"] = True  # make sure the live2d is enabled
-
+    
     # Initialize and run the WebSocket server
     server = WebSocketServer(open_llm_vtuber_config=config)
     server.run(host=config["HOST"], port=config["PORT"])

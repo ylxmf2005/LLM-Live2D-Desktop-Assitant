@@ -16,7 +16,31 @@ const live2dModule = (function() {
   }
 
   async function loadModel(modelInfo) {
-    emoMap = modelInfo["emotionMap"];
+    if (modelInfo == null)
+      modelInfo = {};
+      modelInfo["emotionMap"] = {
+        "neutral": 0,
+        "coldness" : 1, 
+        "disgust" : 1,
+        "sad": 2,
+        "worry": 2,
+        "confusion": 3,
+        "anger": 4,
+        "surprise": 5,
+        "expectation": 5,
+        "joy": 6,
+        "excitement" : 7,
+        "pride": 8,
+        "shy" : 9,
+        "stunned" : 10,
+        "embarrassed" : 11,
+        "play_cool" : 12,
+        "drink_tea" : 13
+      };
+      modelInfo["url"] = "live2d-models/LSS/LSS.model3.json"
+      modelInfo["kScale"] = 0.000625
+
+      emoMap = modelInfo["emotionMap"];
 
     if (model2) {
       app.stage.removeChild(model2); // Remove old model

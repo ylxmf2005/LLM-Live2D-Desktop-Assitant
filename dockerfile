@@ -64,6 +64,6 @@ COPY . /app
 WORKDIR /app
 
 # Expose port 12393 (the new default port)
-EXPOSE 12393
+EXPOSE 1017
 
 CMD ["python3", "server.py"]

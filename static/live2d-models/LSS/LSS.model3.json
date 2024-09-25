@@ -1,0 +1,87 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "LSS.moc3",
+		"Textures": [
+			"LSS.4096/texture_00.png"
+		],
+		"Physics": "LSS.physics3.json",
+		"DisplayInfo": "LSS.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "f00",
+				"File": "f00.exp3.json"
+			},
+			{
+				"Name": "f01",
+				"File": "f01.exp3.json"
+			},
+			{
+				"Name": "f02",
+				"File": "f02.exp3.json"
+			},
+			{
+				"Name": "f03",
+				"File": "f03.exp3.json"
+			},
+			{
+				"Name": "f04",
+				"File": "f04.exp3.json"
+			},
+			{
+				"Name": "f05",
+				"File": "f05.exp3.json"
+			},
+			{
+				"Name": "f06",
+				"File": "f06.exp3.json"
+			},
+			{
+				"Name": "f07",
+				"File": "f07.exp3.json"
+			},
+			{
+				"Name": "f08",
+				"File": "f08.exp3.json"
+			},
+			{
+				"Name": "f09",
+				"File": "f09.exp3.json"
+			},
+			{
+				"Name": "f10",
+				"File": "f10.exp3.json"
+			},
+			{
+				"Name": "f11",
+				"File": "f11.exp3.json"
+			},
+			{
+				"Name": "f12",
+				"File": "f12.exp3.json"
+			},
+			{
+				"Name": "f13",
+				"File": "f13.exp3.json"
+			}
+		]
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		}
+	],
+	"HitAreas": []
+}
