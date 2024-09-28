@@ -153,7 +153,7 @@ class OpenLLMVTuberMain:
         return tts
 
     def set_audio_output_func(
-        self, audio_output_func: Callable[[Optional[str], Optional[str]], None]
+        self, audio_output_func: Callable[[Optional[str], Optional[str], Optional[str]], None]
     ) -> None:
         """
         Set the audio output function to be used for playing audio files.
@@ -185,6 +185,12 @@ class OpenLLMVTuberMain:
 
         # def _play_audio_file(self, sentence: str, filepath: str | None) -> None:
 
+    def get_song_list_str(self) -> str:
+        song_file_path = "./sing/original"
+        song_list = os.listdir(song_file_path)
+        song_list_str = "\n".join([os.path.splitext(song)[0] for song in song_list])
+        return song_list_str
+    
     def get_system_prompt(self) -> str:
         """
         Construct and return the system prompt based on the configuration file.
@@ -201,6 +207,10 @@ class OpenLLMVTuberMain:
                 self.config.get("LIVE2D_Expression_Prompt")
             ).replace("[<insert_emomap_keys>]", self.live2d.emo_str)
 
+        system_prompt += prompt_loader.load_util(
+            "song_prompt"
+        ).replace("[<insert_song_list>]", self.get_song_list_str())
+        
         if self.verbose:
             print("\n === System Prompt ===")
             print(system_prompt)
@@ -321,7 +331,7 @@ class OpenLLMVTuberMain:
                 full_response += char
             print("\n")
 
-            tts_target_sentence = full_response
+            tts_target_sentence = self.live2d.remove_emotion_keywords(full_response)
             if self.translator and self.config.get("TRANSLATE_AUDIO", False):
                 print("Translating...")
                 tts_target_sentence = self.translator.translate(tts_target_sentence)
@@ -333,6 +343,7 @@ class OpenLLMVTuberMain:
                 self._play_audio_file(
                     sentence=full_response,
                     filepath=filename,
+                    instrument_filepath=None
                 )
             else:
                 self._interrupt_post_processing()
@@ -364,7 +375,7 @@ class OpenLLMVTuberMain:
 
         return self.tts.generate_audio(sentence, file_name_no_ext=file_name_no_ext)
 
-    def _play_audio_file(self, sentence: str | None, filepath: str | None) -> None:
+    def _play_audio_file(self, sentence: str | None, filepath: str | None, instrument_filepath: str | None) -> None:
         """
         Play the audio file either locally or remotely using the Live2D controller if available.
 
@@ -413,7 +424,7 @@ class OpenLLMVTuberMain:
         sentence_queue = queue.Queue()
         audio_queue = queue.Queue()
         index = 0
-
+        
         def producer_worker():
             nonlocal index
             try:
@@ -427,7 +438,9 @@ class OpenLLMVTuberMain:
                         full_response[0] += char
                         check_result = self.check(sentence_buffer)
                         if check_result == "sing-mode":
-                            pass
+                            self.sing(sentence_buffer)
+                            sentence_buffer=""
+                            break
                         elif check_result:
                             if self.verbose:
                                 print("\n")
@@ -467,7 +480,7 @@ class OpenLLMVTuberMain:
                         sentence_queue.put((None, None)) 
                         break
 
-                    tts_target_sentence = sentence
+                    tts_target_sentence = self.live2d.remove_emotion_keywords(sentence)
 
                     if self.translator and self.config.get("TRANSLATE_AUDIO", False):
                         print("Translating...")
@@ -524,6 +537,7 @@ class OpenLLMVTuberMain:
                         self._play_audio_file(
                             sentence=info["sentence"],
                             filepath=info["audio_filepath"],
+                            instrument_filepath=None
                         )
                         expected_index += 1
 
@@ -552,6 +566,76 @@ class OpenLLMVTuberMain:
 
         return full_response[0]
 
+
+    def _play_text(self, text: str) -> None:
+        """
+        Generate audio from text and play it using the TTS engine.
+        This function follows the same logic as the 'speak' function to produce and play sound.
+
+        Parameters:
+        - text (str): The text to be converted to speech and played.
+        """
+        if not text.strip():
+            print("No text to play.")
+            return
+
+        tts_target_sentence = self.live2d.remove_emotion_keywords(text)
+
+        if self.translator and self.config.get("TRANSLATE_AUDIO", False):
+            print("Translating...")
+            tts_target_sentence = self.translator.translate(tts_target_sentence)
+            print(f"Translated: {tts_target_sentence}")
+
+        audio_filepath = self._generate_audio_file(
+            tts_target_sentence, file_name_no_ext="temp_text"
+        )
+
+        if audio_filepath:
+            self._play_audio_file(sentence=text, filepath=audio_filepath, instrument_filepath=None)
+        else:
+            print("No audio generated.")
+
+    
+    def sing(self, response_text):
+        print("sing mode activated")
+        """
+        Handle singing functionality when 'sing-mode' is activated.
+
+        Parameters:
+        - response_text (str): The full response text containing song information
+
+        Returns:
+        - None
+        """
+        import json
+
+        try:
+            data = json.loads(response_text)
+            song_name = data.get("song_name") # without the extension name
+        except json.JSONDecodeError:
+            print("Invalid JSON format in response")
+            return
+
+        if not song_name:
+            self._play_text("这首歌本魔女还不会唱呢，换一首吧。")
+            return
+
+        # merged_file_path = os.path.join('./sing/merged', f'{song_name}.wav')
+        converted_vocal_path = os.path.join('./sing/converted_vocal', f'{song_name}.wav')
+        instrument_path = os.path.join('./sing/instrument', f'{song_name}.wav')
+
+        if not os.path.exists(converted_vocal_path) or not os.path.exists(instrument_path):
+            self._play_text("这首歌本魔女还不会唱呢，换一首吧。")
+            return
+
+        self._play_text(f"请欣赏 {song_name}")
+
+        self._play_audio_file(
+            sentence = song_name,
+            filepath=converted_vocal_path,
+            instrument_filepath = instrument_path
+        )           
+       
 
     def interrupt(self, heard_sentence: str = "") -> None:
         """Set the interrupt flag to stop the conversation chain.

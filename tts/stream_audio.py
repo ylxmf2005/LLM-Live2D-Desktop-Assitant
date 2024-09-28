@@ -35,7 +35,7 @@ class AudioPayloadPreparer:
         return [volume / max_volume for volume in volumes]
 
     def prepare_audio_payload(
-        self, audio_path, display_text=None, expression_list=None
+        self, audio_path, instrument_path, display_text=None, expression_list=None
     ):
         """
         Prepares the audio payload for sending to a broadcast endpoint.
@@ -53,12 +53,18 @@ class AudioPayloadPreparer:
 
         audio = AudioSegment.from_file(audio_path)
         audio_bytes = audio.export(format="wav").read()
+        instrument_base64 = None
+        if instrument_path:
+            instrument = AudioSegment.from_file(instrument_path)
+            instrument_bytes = instrument.export(format="wav").read()
+            instrument_base64 = base64.b64encode(instrument_bytes).decode("utf-8")
         audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
         volumes = self.__get_volume_by_chunks(audio)
 
         payload = {
             "type": "audio",
             "audio": audio_base64,
+            "instrument": instrument_base64,
             "volumes": volumes,
             "slice_length": self.chunk_length_ms,
             "text": display_text,

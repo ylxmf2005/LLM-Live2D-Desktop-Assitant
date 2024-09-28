@@ -51,6 +51,7 @@ memgpt:
   # You will find admin server password in memGPT console output. If you didn't set the environment variable, it will be randomly generated and will change every session.
   ADMIN_TOKEN: ""
 
+
   # The ID of the agent to send the message to.
   AGENT_ID: ""
   VERBOSE: True
@@ -72,14 +73,14 @@ MIC_IN_BROWSER: False # Deprecated and useless now. Do not enable it. Bad things
 
 # speech to text model options: "Faster-Whisper", "WhisperCPP", "Whisper", "AzureASR", "FunASR", "GroqWhisperASR"
 # ASR_MODEL: "Faster-Whisper"
-ASR_MODEL: "GroqWhisperASR"
+ASR_MODEL: "Faster-Whisper"
 
 # Faster whisper config
 Faster-Whisper:
-  model_path: "distil-medium.en"
+  model_path: "distil-large-v3"
   download_root: "asr/models"
   language: "en"
-  device: "auto" # cpu, cuda, or auto. faster-whisper doesn't support mps
+  device: "cuda" # cpu, cuda, or auto. faster-whisper doesn't support mps
 
 WhisperCPP:
   # all available models are listed on https://abdeladim-s.github.io/pywhispercpp/#pywhispercpp.constants.AVAILABLE_MODELS
@@ -91,13 +92,13 @@ WhisperCPP:
   language: "en" # en, zh, auto, 
 
 Whisper:
-  name: "medium"
+  name: "large-v3"
   download_root: "asr/models"
   device: "cpu"
 
 FunASR:
   # model_name: "iic/SenseVoiceSmall" # or "paraformer-zh"
-  model_name: "paraformer-zh"
+  model_name: "iic/SenseVoiceSmall"
   vad_model: "fsmn-vad" # this is only used to make it works if audio is longer than 30s
   punc_model: "ct-punc" # punctuation model.
   device: "cpu"
@@ -107,7 +108,7 @@ FunASR:
   language: "auto" # zh, en, auto
 
 GroqWhisperASR:
-  api_key: "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"
+  api_key: "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"
   model: "whisper-large-v3"
   # model: "distil-whisper-large-v3-en" # use "whisper-large-v3" instead for multi-lingual
   lang: "" # or put nothing in it and it will be auto
@@ -160,8 +161,9 @@ piperTTS:
   verbose: False
 
 GPTSoVITS:
-  ref_wav_path: "elaina1.wav" # The file needs to be placed in the tts dict.
-  prompt_text : "魔女の旅旅をお買い上げになったあなたに、魔法のように時空を超えて、語りかける、麗しい声の少女は。" # prompt text for the reference audio
+  ref_wav_path: "elaina2.wav" # The file needs to be placed in the tts dict.
+  # prompt_text : "魔女の旅旅をお買い上げになったあなたに、魔法のように時空を超えて、語りかける、麗しい声の少女は。" # prompt text for the reference audio
+  prompt_text : "魔女の 度々 第21巻 ドラマ CD 付き特装版 魔女たちの小話"
   aux_ref_audio_paths : []  # auxiliary reference audio paths for multi-speaker tone fusion
   # "elaina2.wav", "elaina3.wav"
   prompt_language: "ja"

@@ -218,7 +218,7 @@
                     if (state == "interrupted") {
                         console.log("Audio playback intercepted. Sentence:", message.text);
                     } else {
-                        addAudioTask(message.audio, message.volumes, message.slice_length, message.text, message.expressions);
+                        addAudioTask(message.audio, message.instrument, message.volumes, message.slice_length, message.text, message.expressions);
                         // playAudioLipSync(message.audio, message.volumes, message.slice_length, message.text, message.expressions);
                     }
                     break;
@@ -275,7 +275,7 @@
         }
 
         audioTaskQueue = new TaskQueue(100); // 100ms delay between tasks
-        async function addAudioTask(audio_base64, volumes, slice_length, text = null, expression_list = null) {
+        async function addAudioTask(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
             console.log(`1. Adding audio task ${text} to queue`);
 
             // calculate the total duration of the audio
@@ -283,7 +283,7 @@
             console.log(`2. Audio length: ${audioLength}`);
 
             audioTaskQueue.addTask(async () => {
-                playAudioLipSync(audio_base64, volumes, slice_length, text, expression_list);
+                playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text, expression_list);
                 await new Promise(resolve => setTimeout(resolve, audioLength));
                 console.log(`3. Audio task ${text} completed`);
             });
@@ -300,23 +300,28 @@
         }
 
 
-        function playAudioLipSync(audio_base64, volumes, slice_length, text = null, expression_list = null) {
-
+        function playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
             if (state === "interrupted") {
                 console.error("Audio playback blocked. Sentence:", text);
                 audioTaskQueue.clearQueue();
                 return;
             }
-
+           
             fullResponse += text;
             if (text) {
                 document.getElementById("message").textContent = text;
             }
-
+           
+            if (instrument_base64 != "None") {
+                const instrumentAudio = new Audio("data:audio/wav;base64," + instrument_base64);
+                instrumentAudio.play();
+            }
+           
             const displayExpression = expression_list ? expression_list[0] : null;
             console.log("Start playing audio: ", text);
-            model2.speak("data:audio/wav;base64," + audio_base64, { expression: displayExpression, resetExpression: false });
+            model2.speak("data:audio/wav;base64," + audio_base64, { expression: displayExpression,   resetExpression: false });
         }
+
 
         // Start the microphone. This will start the VAD and send audio to the server when speech is detected.
         // Once speech ends, the mic will pause.

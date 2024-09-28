@@ -18,12 +18,15 @@ class VoiceRecognition(ASRInterface):
         self.MODEL_PATH = model_path
         self.LANG = language
 
-        self.model = WhisperModel(
-            model_path,
-            download_root=download_root,
-            device=device,
-            compute_type="float32",
-        )
+        # self.model = WhisperModel(
+        #     model_path,
+        #     download_root=download_root,
+        #     device=device,
+        #     compute_type="float32",
+        # )
+
+        self.model = WhisperModel("distil-large-v3", device="cuda", compute_type="float16", local_files_only=False)
+
         self.asr_with_vad = None
 
     # Implemented in asr_interface.py
@@ -34,7 +37,7 @@ class VoiceRecognition(ASRInterface):
         segments, info = self.model.transcribe(
             audio,
             beam_size=5 if self.BEAM_SEARCH else 1,
-            language=self.LANG,
+            # language=self.LANG,
             condition_on_previous_text=False,
         )
 

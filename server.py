@@ -94,7 +94,7 @@ class WebSocketServer:
             self.open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_config)
             audio_payload_preparer = AudioPayloadPreparer()
 
-            def _play_audio_file(sentence: str | None, filepath: str | None) -> None:
+            def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath : str | None) -> None:
                 if filepath is None:
                     print("No audio to be streamed. Response is empty.")
                     return
@@ -102,8 +102,10 @@ class WebSocketServer:
                 if sentence is None:
                     sentence = ""
                 print(f">> Playing {filepath}...")
+
                 payload, duration = audio_payload_preparer.prepare_audio_payload(
                     audio_path=filepath,
+                    instrument_path=instrument_filepath,
                     display_text=sentence,
                     expression_list=l2d.extract_emotion(sentence),
                 )
