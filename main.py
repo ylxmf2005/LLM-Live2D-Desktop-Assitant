@@ -1,12 +1,16 @@
 import os
+import random
 import shutil
 import atexit
 import threading
 import queue
+import uuid
 from typing import Callable, Iterator, Optional
 from fastapi import WebSocket
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
+import yaml
+
 from asr.asr_factory import ASRFactory
 from asr.asr_interface import ASRInterface
 from live2d_model import Live2dModel
@@ -17,9 +21,6 @@ from tts.tts_factory import TTSFactory
 from tts.tts_interface import TTSInterface
 from translate.translate_interface import TranslateInterface
 from translate.translate_factory import TranslateFactory
-
-import yaml
-import random
 
 
 class OpenLLMVTuberMain:
@@ -714,7 +715,7 @@ class OpenLLMVTuberMain:
         ]
         return any(text.strip().endswith(punct) for punct in punctuation_blacklist)
 
-    def clean_cache():
+    def clean_cache(self):
         cache_dir = "./cache"
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)
