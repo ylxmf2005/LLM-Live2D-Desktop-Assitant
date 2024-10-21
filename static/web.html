@@ -26,7 +26,7 @@
     <!-- <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script> -->
     <script src="libs/bundle.min.js"></script>
 
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="web.css">
 </head>
 
 <body>
@@ -47,7 +47,7 @@
     </div>
 
     <!-- <script src="./modelDict.js"></script> -->
-    <script src="./live2d.js"></script>
+    <script src="./web_live2d.js"></script>
 
     <script>
         // idle: When the LLM is not thinking or speaking and is waiting for user input.
@@ -134,8 +134,6 @@
             ws.send(JSON.stringify({ type: "mic-audio-end" }));
         }
 
-        // window.addEventListener('load', init_vad);
-
         // WebSocket connection
         let ws;
         const wsStatus = document.getElementById('wsStatus');
@@ -148,7 +146,8 @@
         if (window.location.protocol.startsWith("http")) {
             console.log("Running on server");
             wsUrl.value = "/client-ws";
-        } else { // if running on local using file://
+        } else { 
+            // if running on local using file://
             console.log("Running on local");
         }
 
@@ -219,7 +218,6 @@
                         console.log("Audio playback intercepted. Sentence:", message.text);
                     } else {
                         addAudioTask(message.audio, message.instrument, message.volumes, message.slice_length, message.text, message.expressions);
-                        // playAudioLipSync(message.audio, message.volumes, message.slice_length, message.text, message.expressions);
                     }
                     break;
                 case "set-model":
@@ -243,28 +241,7 @@
             expressionIndex = parseInt(expressionIndex);
             model2.internalModel.motionManager.expressionManager.setExpression(expressionIndex);
             console.info(`>> [x] -> Expression set to: (${expressionIndex})`);
-        }
-
-        // [Deprecated] Check if the string contains an expression. If it does, set the expression of the model2.
-        // @param {string} str - the string to check
-        function checkStringForExpression(str) {
-            console.log("emo map: ", emoMap);
-            for (const key of Object.keys(emoMap)) {
-                if (str.toLowerCase().includes("[" + key + "]")) {
-                    console.info(">> [ ] <- add to exec queue: " + key + ", " + emoMap[key]);
-                    taskQueue.addTask(() => { setExpression(emoMap[key]); });
-                    taskQueue.addTask(() => { console.log("timing out..."); });
-                    // setExpression(emoMap[key]);
-                }
-            }
-        }
-        // [Deprecated] List all supported expressions
-        function listSupportedExpressions() {
-            emoMap = model2.internalModel.motionManager.expressionManager.emotionMap;
-            console.log(emoMap);
-        }
-
-
+        }       
 
         function setMouth(mouthY) {
             if (typeof model2.internalModel.coreModel.setParameterValueById === 'function') {
@@ -274,7 +251,7 @@
             }
         }
 
-        audioTaskQueue = new TaskQueue(100); // 100ms delay between tasks
+        audioTaskQueue = new TaskQueue(500); 
         async function addAudioTask(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
             console.log(`1. Adding audio task ${text} to queue`);
 
@@ -353,7 +330,7 @@
         // Initialize WebSocket connection
         connectWebSocket();
 
-        // Triple-click functionality to toggle hidden elements
+        // Triple-click functionality to toggle hidden UI elements
         let clickCount = 0;
         let clickTimer = null;
 
@@ -361,17 +338,14 @@
             clickCount++;
 
             if (clickCount === 1) {
-                // Start a timer
                 clickTimer = setTimeout(() => {
                     clickCount = 0;
                 }, 500); 
             }
 
             if (clickCount === 3) {
-                // Triple click detected
                 toggleHiddenElements();
 
-                // Reset click count
                 clickCount = 0;
                 clearTimeout(clickTimer);
                 clickTimer = null;
@@ -379,12 +353,10 @@
         }
 
         function toggleHiddenElements() {
-            // Toggle the 'hidden' class on the elements
             document.querySelector('.top-left').classList.toggle('hidden');
             document.querySelector('.bottom-container').classList.toggle('hidden');
         }
 
-        // Attach the click handler to the canvas
         document.getElementById('canvas').addEventListener('click', handleClick);
 
     </script>

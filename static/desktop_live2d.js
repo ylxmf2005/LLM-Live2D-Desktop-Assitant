@@ -1,7 +1,8 @@
+
 var app, model2;
 var modelInfo, emoMap;
 
-const live2dModule = (function () {
+window.live2dModule = (function () {
   const live2d = PIXI.live2d;
 
   async function init() {
@@ -12,12 +13,11 @@ const live2dModule = (function () {
       transparent: true,
       backgroundAlpha: 0,
     });
+
+    await loadModel();
   }
 
-  async function loadModel(modelInfo) {
-    if (modelInfo == null)
-      modelInfo = {};
-    
+  async function loadModel(modelInfo = {}) {
     modelInfo["emotionMap"] = {
       "neutral": 0,
       "disdainful": 1,
@@ -40,7 +40,7 @@ const live2dModule = (function () {
       "drink_tea": 13
     };
     modelInfo["url"] = "live2d-models/LSS/LSS.model3.json";
-    modelInfo["kScale"] = 0.000625;
+    modelInfo["kScale"] = 0.0003;
 
     emoMap = modelInfo["emotionMap"];
 
@@ -66,7 +66,9 @@ const live2dModule = (function () {
       model.scale.set(Math.min(scaleX, scaleY));
       model.y = innerHeight * 0.01;
 
-      draggable(model);
+      makeDraggable(model);
+      setupMouseEvents(model);
+
     });
 
     model2 = models[0];
@@ -74,11 +76,12 @@ const live2dModule = (function () {
     model2.internalModel.eyeBlink = null;
   }
 
-  function draggable(model) {
+  function makeDraggable(model) {
     model.interactive = true;
     model.buttonMode = true;
 
     model.on("pointerdown", (e) => {
+      if (e.data.button !== 0) return;
       model.dragging = true;
       model._pointerX = e.data.global.x - model.x;
       model._pointerY = e.data.global.y - model.y;
@@ -93,6 +96,27 @@ const live2dModule = (function () {
 
     model.on("pointerupoutside", () => (model.dragging = false));
     model.on("pointerup", () => (model.dragging = false));
+  }
+
+  function setupMouseEvents(model) {
+    // 当鼠标进入模型区域时，允许窗口捕获鼠标事件
+    model.on("pointerover", () => {
+      window.electronAPI.setIgnoreMouseEvents(false);
+    });
+
+    // 当鼠标离开模型区域时，忽略窗口鼠标事件（允许事件穿透）
+    model.on("pointerout", () => {
+      window.electronAPI.setIgnoreMouseEvents(true);
+    });
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button === 2) { // 右键
+        const x = e.screenX;
+        const y = e.screenY;
+        window.electronAPI.showContextMenu(x, y);
+      }
+    });
+
   }
 
   return {

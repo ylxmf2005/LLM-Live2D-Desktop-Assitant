@@ -1,8 +1,12 @@
-sing/converted_vocal
-sing/instrument
-sing/merged
-sing/original
-sing/vocal
+sing/converted_vocal/*
+sing/instrument/*
+sing/merged/*
+sing/original/*
+sing/vocal/*
+conf.yaml
+node_modules/
+
+
 
 # macOS system files
 .DS_Store

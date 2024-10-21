@@ -21,24 +21,10 @@ ollama:
   ORGANIZATION_ID: "org_eternity"
   PROJECT_ID: "project_glass"
   ## LLM name
-  # MODEL: "llama3.1:latest"
+  #  MODEL: "llama3.1:latest"
   MODEL: "deepseek-chat"
   # system prompt is at the very end of this file
   VERBOSE: False
-
-openai:
-  # BASE_URL: "http://localhost:11434"
-  # BASE_URL: "http://localhost:11434/v1"
-  BASE_URL: "https://api.openai.com/v1"
-  LLM_API_KEY: ""
-  ORGANIZATION_ID: "org_eternity"
-  PROJECT_ID: "project_glass"
-  ## LLM name
-  # MODEL: "llama3.1:latest"
-  MODEL: "gpt-4o"
-  # system prompt is at the very end of this file
-  VERBOSE: False
-
 
 
 # MemGPT Configurations
@@ -108,7 +94,7 @@ FunASR:
   language: "auto" # zh, en, auto
 
 GroqWhisperASR:
-  api_key: "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"
+  api_key: ""
   model: "whisper-large-v3"
   # model: "distil-whisper-large-v3-en" # use "whisper-large-v3" instead for multi-lingual
   lang: "" # or put nothing in it and it will be auto
@@ -118,8 +104,8 @@ GroqWhisperASR:
 
 # ============== Text to Speech ==============
 TTS_ON: True
-# text to speech model options: "AzureTTS", "pyttsx3TTS", "edgeTTS", "barkTTS", "cosyvoiceTTS", "meloTTS", "piperTTS"
-TTS_MODEL: "GPTSoVITS"
+# text to speech model options: "AzureTTS", "pyttsx3TTS", "edgeTTS", "barkTTS", "cosyvoiceTTS", "meloTTS", "piperTTS", "GPTSoVITS"
+TTS_MODEL: "edgeTTS"
 
 # if on, whenever the LLM finish a sentence, the model will speak, instead of waiting for the full response
 # if turned on, the timing and order of the facial expression will be more accurate
@@ -132,8 +118,8 @@ barkTTS:
 edgeTTS:
   # Check out doc at https://github.com/rany2/edge-tts
   # Use `edge-tts --list-voices` to list all available voices
-  # voice: "en-US-AvaMultilingualNeural" 
-  voice: "zh-CN-XiaoxiaoNeural" 
+  voice: "en-US-AvaMultilingualNeural" 
+  # voice: "zh-CN-XiaoxiaoNeural" 
   # "ja-JP-NanamiNeural"
 
 # pyttsx3 doesn't have any config.
@@ -173,11 +159,12 @@ GPTSoVITS:
 #  ============== Translate (to only change the language for TTS) ==============
 # Like... you speak and read the subtitles in English, and the TTS speaks Japanese or that kind of things
 
-TRANSLATE_AUDIO: True
+TRANSLATE_AUDIO: False
 TRANSLATE_PROVIDER: "DeepLX"
 
 DeepLX:
-  DEEPLX_TARGET_LANG: "JA"
+  # DEEPLX_TARGET_LANG: "JA"
+  DEEPLX_TARGET_LANG: "EN"
   DEEPLX_API_ENDPOINT: "http://localhost:1188/v2/translate"
 
 

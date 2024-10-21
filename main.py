@@ -713,6 +713,7 @@ class OpenLLMVTuberMain:
             "～",
             "！",
         ]
+
         return any(text.strip().endswith(punct) for punct in punctuation_blacklist)
 
     def clean_cache(self):

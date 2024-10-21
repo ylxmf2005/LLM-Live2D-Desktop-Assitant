@@ -7,6 +7,7 @@ from typing import List, Dict
 import yaml
 import numpy as np
 from fastapi import FastAPI, WebSocket, APIRouter
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 from main import OpenLLMVTuberMain
@@ -47,6 +48,10 @@ class WebSocketServer:
         # the connection between this server and the frontend client
         # The version 2 of the client-ws. Introduces breaking changes.
         # This route will initiate its own main.py instance and conversation loop
+        @self.app.get("/")
+        async def redirect_root():
+            return RedirectResponse(url="/web.html")
+
         @self.app.websocket("/client-ws")
         async def websocket_endpoint(websocket: WebSocket):
             await websocket.accept()
@@ -164,7 +169,7 @@ class WebSocketServer:
                             except asyncio.CancelledError:
                                 print("Conversation task was cancelled.")
                             except InterruptedError as e:
-                                print(f"😢Conversation was interrupted. {e}")
+                                print(f"Conversation was interrupted. {e}")
 
                         conversation_task = asyncio.create_task(_run_conversation())
                     else:
@@ -177,6 +182,13 @@ class WebSocketServer:
     def _mount_static_files(self):
         """Mounts static file directories."""
         self.app.mount("/", StaticFiles(directory="./static", html=True), name="static")
+        pass
+
+    # def run(self, host: str = "127.0.0.1", port: int = 8000, log_level: str = "info"):
+    #     """Runs the FastAPI application using Uvicorn."""
+    #     import uvicorn
+
+    #     uvicorn.run(self.app, host=host, port=port, log_level=log_level)
 
     def run(self, host: str = "127.0.0.1", port: int = 8000, log_level: str = "info"):
         """Runs the FastAPI application using Uvicorn."""
@@ -192,7 +204,6 @@ class WebSocketServer:
 
 
 if __name__ == "__main__":
-
     atexit.register(WebSocketServer.clean_cache)
 
     # Load configurations from yaml file
@@ -204,3 +215,4 @@ if __name__ == "__main__":
     # Initialize and run the WebSocket server
     server = WebSocketServer(open_llm_vtuber_config=config)
     server.run(host=config["HOST"], port=config["PORT"])
+

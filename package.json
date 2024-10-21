@@ -1,0 +1,47 @@
+{
+  "name": "Elaina",
+  "version": "1.0.0",
+  "description": "Elaina Desktop Pet",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.yourapp.id",
+    "productName": "Elaina",
+    "directories": {
+      "buildResources": "static"
+    },
+    "files": [
+      "**/*",
+      "!node_modules",
+      "!backend/**/*.pyc",
+      "!**/*.md",
+      "!**/*.map"
+    ],
+    "extraFiles": [
+      {
+        "from": "backend/",
+        "to": "backend/",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "icon": "static/icon.png"
+    },
+    "mac": {
+      "icon": "static/icon.icns"
+    },
+    "linux": {
+      "icon": "static/icon.png"
+    }
+  },
+  "author": "Ethan Lee",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.1",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {}
+}
