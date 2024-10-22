@@ -27,7 +27,7 @@ class WebSocketServer:
         server_ws_clients (List[WebSocket]): List of connected WebSocket clients for "/server-ws".
     """
 
-    def __init__(self, open_llm_vtuber_config: Dict | None = None):
+    def __init__(self, open_llm_vtuber_config: Dict | None = None, web : bool = False):
         """
         Initializes the WebSocketServer with the given configuration.
         """
@@ -39,7 +39,8 @@ class WebSocketServer:
         self.open_llm_vtuber: OpenLLMVTuberMain | None = None
         self.open_llm_vtuber_config: Dict | None = open_llm_vtuber_config
         self._setup_routes()
-        self._mount_static_files()
+        if web:
+            self._mount_static_files()
         self.app.include_router(self.router)
 
     def _setup_routes(self):
@@ -202,10 +203,14 @@ class WebSocketServer:
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir)
 
-
+import argparse
 if __name__ == "__main__":
-    atexit.register(WebSocketServer.clean_cache)
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("--web", action="store_true", help="Web mode")
+    args = parser.parse_args()
 
+    atexit.register(WebSocketServer.clean_cache)
+    
     # Load configurations from yaml file
     with open("conf.yaml", "rb") as f:
         config = yaml.safe_load(f)
@@ -213,6 +218,6 @@ if __name__ == "__main__":
     config["LIVE2D"] = True  # make sure the live2d is enabled
     
     # Initialize and run the WebSocket server
-    server = WebSocketServer(open_llm_vtuber_config=config)
+    server = WebSocketServer(open_llm_vtuber_config=config, web=args.web)
     server.run(host=config["HOST"], port=config["PORT"])
 

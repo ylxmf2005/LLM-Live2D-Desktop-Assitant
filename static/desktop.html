@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,17 +9,24 @@
     <script src="libs/index.min.js"></script>
     <script src="libs/ort.js"></script>
     <script src="libs/bundle.min.js"></script>
-    <script src="TaskQueue.js"></script>
+    <script src="desktop/task_queue.js"></script>
+    <script src="libs/porcupine-web.js"></script>
+    <script src="libs/web-voice-processor.js"></script>
+    <script src="desktop/porcupine_params.js"></script>
+    <script src="desktop/Elaina_en_wasm_v3_0_0.js"></script>
 
     <!-- 引入样式 -->
-    <link rel="stylesheet" href="desktop.css">
+    <link rel="stylesheet" href="desktop/style.css">
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <div id="message" class="hidden"></div>
 
     <!-- 引入脚本 -->
-    <script src="desktop_live2d.js"></script>
-    <script src="control.js"></script>
+    <script src="desktop/live2d.js"></script>
+    <script src="desktop/websocket.js"></script>
+    <script src="desktop/vad.js"></script>
+    <script src="desktop/audio.js"></script>
+    <script src="desktop/electron.js"></script>
 </body>
 </html>

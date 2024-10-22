@@ -7,41 +7,16 @@
     "start": "electron .",
     "build": "electron-builder"
   },
-  "build": {
-    "appId": "com.yourapp.id",
-    "productName": "Elaina",
-    "directories": {
-      "buildResources": "static"
-    },
-    "files": [
-      "**/*",
-      "!node_modules",
-      "!backend/**/*.pyc",
-      "!**/*.md",
-      "!**/*.map"
-    ],
-    "extraFiles": [
-      {
-        "from": "backend/",
-        "to": "backend/",
-        "filter": ["**/*"]
-      }
-    ],
-    "win": {
-      "icon": "static/icon.png"
-    },
-    "mac": {
-      "icon": "static/icon.icns"
-    },
-    "linux": {
-      "icon": "static/icon.png"
-    }
-  },
   "author": "Ethan Lee",
   "license": "MIT",
   "devDependencies": {
     "electron": "^33.0.1",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@picovoice/porcupine-web": "^3.0.3",
+    "@picovoice/web-voice-processor": "^4.0.9",
+    "mic": "^2.1.2"
+  }
 }

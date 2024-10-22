@@ -1,0 +1,15 @@
+directories:
+  output: dist
+  buildResources: build-resources
+appId: com.ethanlee.elaina
+productName: Elaina
+files:
+  - filter:
+      - main.js
+      - static/**/*
+      - node_modules/**/*
+      - package.json
+extraResources:
+  - filter:
+      - server.py
+electronVersion: 33.0.1

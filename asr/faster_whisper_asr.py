@@ -16,16 +16,9 @@ class VoiceRecognition(ASRInterface):
         device: str = "auto",
     ) -> None:
         self.MODEL_PATH = model_path
-        self.LANG = language
+        self.LANG = language    
 
-        # self.model = WhisperModel(
-        #     model_path,
-        #     download_root=download_root,
-        #     device=device,
-        #     compute_type="float32",
-        # )
-
-        self.model = WhisperModel("distil-large-v3", device="cuda", compute_type="float16", local_files_only=False)
+        self.model = WhisperModel(model_path, device="cuda", compute_type="float16", local_files_only=False)
 
         self.asr_with_vad = None
 

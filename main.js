@@ -1,4 +1,3 @@
-// main.js
 const { app, BrowserWindow, Menu, Tray, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -8,36 +7,35 @@ let tray = null;
 let backendProcess;
 
 const contextMenu = Menu.buildFromTemplate([
-  { label: '显示字幕', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
-  { label: '麦克风', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
-  { label: '允许打断', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
+  { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
+  { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
+  { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
   { type: 'separator' },
-  { label: '退出', click: () => app.quit() },
+  { label: 'Quit', click: () => app.quit() },
 ]);
+
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    // width: 800,
-    // height: 600,
     fullscreen: true,
     transparent: true,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    hasShadow: false, // 确保窗口没有阴影
+    hasShadow: false, 
     webPreferences: {
-      preload: path.join(__dirname, 'static', 'preload.js'),
+      preload: path.join(__dirname, 'static', 'desktop', 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false, 
-      enableRemoteModule: false,
+      nodeIntegration: true,
+      enableRemoteModule: true,
+      sandbox: false,
     },
   });
 
   mainWindow.loadFile(path.join(__dirname, 'static', 'desktop.html'));
-  //mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
-  // 初始时忽略鼠标事件，允许事件穿透
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
 
@@ -45,13 +43,11 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // 创建系统托盘
   createTray();
 }
 
-
 function createTray() {
-  tray = new Tray(path.join(__dirname, 'static', 'icon.png'));
+  tray = new Tray(path.join(__dirname, 'static', 'pictures', 'icon.png'));
   tray.setToolTip('Elaina');
   tray.setContextMenu(contextMenu);
 }
@@ -69,13 +65,12 @@ function toggleInterruption(isChecked) {
 }
 
 app.on('ready', () => {
-  // 启动后端服务器
   startBackend();
+  setTimeout(() => {}, 1000);
   createWindow();
 });
 
 app.on('window-all-closed', function () {
-  // 对于 macOS，一般在关闭窗口时不退出应用
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -88,27 +83,26 @@ app.on('activate', function () {
 });
 
 app.on('will-quit', () => {
-  // 退出应用时，停止后端进程
   stopBackend();
 });
 
 function startBackend() {
-  const scriptPath = path.join(__dirname, 'server.py'); 
+  const scriptPath = path.join(__dirname, 'server.py');
   backendProcess = spawn('python', [scriptPath], {
     cwd: __dirname,
     env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
   });
 
   backendProcess.stdout.on('data', (data) => {
-    process.stdout.write(`${data}`);  
+    process.stdout.write(`${data}`);
   });
 
   backendProcess.stderr.on('data', (data) => {
-    process.stdout.write(`${data}`);  
+    process.stdout.write(`${data}`);
   });
 
   backendProcess.on('close', (code) => {
-    process.stdout.write(`${code}`);  
+    process.stdout.write(`${code}`);
   });
 }
 
@@ -129,4 +123,13 @@ ipcMain.on('show-context-menu', (event, x, y) => {
     x: x,
     y: y,
   });
+});
+
+ipcMain.on('update-menu-checked', (event, label, checked) => {
+  const menuItem = contextMenu.items.find(item => item.label === label);
+  if (menuItem) {
+    menuItem.checked = checked;
+    Menu.setApplicationMenu(Menu.buildFromTemplate(contextMenu.items));
+    tray.setContextMenu(contextMenu);
+  }
 });

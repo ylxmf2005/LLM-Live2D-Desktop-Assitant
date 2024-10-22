@@ -319,7 +319,7 @@ class OpenLLMVTuberMain:
         full_response = ""
         if self.config.get("SAY_SENTENCE_SEPARATELY", True):
             full_response = self.speak_by_sentence_chain(
-                chat_completion, pre_sync=self.config.get("PRE_SYNC", False)
+                chat_completion
             )
         else:
             full_response = ""
@@ -406,16 +406,14 @@ class OpenLLMVTuberMain:
         except Exception as e:
             print(f"Error playing the audio file {filepath}: {e}")
 
-    def speak_by_sentence_chain(self, chat_completion: Iterator[str], pre_sync: bool = False) -> str:
+    def speak_by_sentence_chain(self, chat_completion: Iterator[str]) -> str:
         """
         Generate and play the chat completion sentences one by one using the TTS engine.
         Now properly handles interrupts in a multi-threaded environment using the existing  _continue_exec_flag.
 
         Parameters:
         - chat_completion (Iterator[str]): The chat completion to speak
-        - pre_sync (bool): If True, preprocesses and generates audio files asynchronously before    playback.
-                           If False, processes and plays back sentences one at a time.
-
+     
         Returns:
         - str: The full response from the LLM
         """
