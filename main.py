@@ -1,4 +1,6 @@
 import os
+import sys
+import re
 import random
 import shutil
 import atexit
@@ -7,10 +9,12 @@ import queue
 import uuid
 from typing import Callable, Iterator, Optional
 from fastapi import WebSocket
+from loguru import logger
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import yaml
 
+import __init__
 from asr.asr_factory import ASRFactory
 from asr.asr_interface import ASRInterface
 from live2d_model import Live2dModel
@@ -37,12 +41,14 @@ class OpenLLMVTuberMain:
     """
 
     config: dict
+    session_id: str
     llm: LLMInterface
     asr: ASRInterface
     tts: TTSInterface
     translator: TranslateInterface | None
     live2d: Live2dModel | None
     _continue_exec_flag: threading.Event
+    heard_sentence: str = ""
     EXEC_FLAG_CHECK_TIMEOUT = 5  # seconds
 
     def __init__(
@@ -52,12 +58,15 @@ class OpenLLMVTuberMain:
         custom_tts: TTSInterface | None = None,
         websocket: WebSocket | None = None,
     ) -> None:
+        logger.info(f"t41372/Open-LLM-VTuber, version {__init__.__version__}")
+        
         self.config = configs
         self.verbose = self.config.get("VERBOSE", False)
         self.websocket = websocket
         self.live2d = self.init_live2d()
         self._continue_exec_flag = threading.Event()
         self._continue_exec_flag.set()  # Set the flag to continue execution
+        self.session_id = str(uuid.uuid4().hex)
 
         # Init ASR if voice input is on.
         if self.config.get("VOICE_INPUT_ON", False):
@@ -125,33 +134,13 @@ class OpenLLMVTuberMain:
     def init_asr(self) -> ASRInterface:
         asr_model = self.config.get("ASR_MODEL")
         asr_config = self.config.get(asr_model, {})
-        if asr_model == "AzureASR":
-            import api_keys
-
-            asr_config = {
-                "callback": print,
-                "subscription_key": api_keys.AZURE_API_Key,
-                "region": api_keys.AZURE_REGION,
-            }
-
         asr = ASRFactory.get_asr_system(asr_model, **asr_config)
         return asr
 
     def init_tts(self) -> TTSInterface:
         tts_model = self.config.get("TTS_MODEL", "pyttsx3TTS")
         tts_config = self.config.get(tts_model, {})
-
-        if tts_model == "AzureTTS":
-            import api_keys
-
-            tts_config = {
-                "api_key": api_keys.AZURE_API_Key,
-                "region": api_keys.AZURE_REGION,
-                "voice": api_keys.AZURE_VOICE,
-            }
-        tts = TTSFactory.get_tts_engine(tts_model, **tts_config)
-
-        return tts
+        return TTSFactory.get_tts_engine(tts_model, **tts_config)
 
     def set_audio_output_func(
         self, audio_output_func: Callable[[Optional[str], Optional[str], Optional[str]], None]
@@ -517,6 +506,7 @@ class OpenLLMVTuberMain:
         def consumer_worker():
             expected_index = 0
             audio_buffer = {}
+            self.heard_sentence = ""
             try:
                 while True:
                     if not self._continue_exec_flag.is_set():
@@ -525,6 +515,9 @@ class OpenLLMVTuberMain:
                     if audio_info is None:
                         # No more audio
                         break
+
+                    if audio_info:
+                        self.heard_sentence += audio_info["sentence"]
                     idx = audio_info["index"]
                     audio_buffer[idx] = audio_info
 
@@ -721,9 +714,44 @@ class OpenLLMVTuberMain:
             os.makedirs(cache_dir)
 
 
+def load_config_with_env(path) -> dict:
+    """
+    Load the configuration file with environment variables.
+
+    Parameters:
+    - path (str): The path to the configuration file.
+
+    Returns:
+    - dict: The configuration dictionary.
+
+    Raises:
+    - FileNotFoundError if the configuration file is not found.
+    - yaml.YAMLError if the configuration file is not a valid YAML file.
+    """
+    with open(path, "r", encoding="utf-8") as file:
+        content = file.read()
+
+    # Match ${VAR_NAME}
+    pattern = re.compile(r"\$\{(\w+)\}")
+
+    # replace ${VAR_NAME} with os.getenv('VAR_NAME')
+    def replacer(match):
+        env_var = match.group(1)
+        return os.getenv(
+            env_var, match.group(0)
+        )  # return the original string if the env var is not found
+
+    content = pattern.sub(replacer, content)
+
+    # Load the yaml file
+    return yaml.safe_load(content)
+
+
 if __name__ == "__main__":
-    with open("conf.yaml", "rb") as f:
-        config = yaml.safe_load(f)
+    
+    logger.add(sys.stderr, level="DEBUG")
+
+    config = load_config_with_env("conf.yaml")
 
     vtuber_main = OpenLLMVTuberMain(config)
 
@@ -735,14 +763,19 @@ if __name__ == "__main__":
         except InterruptedError as e:
             print(f"😢Conversation was interrupted. {e}")
 
-    while True:
-        print("tts on: ", vtuber_main.config.get("TTS_ON", False))
-        if vtuber_main.config.get("TTS_ON", False) == False:
-            print("its indeed off")
-            vtuber_main.conversation_chain()
-        else:
-            threading.Thread(target=_run_conversation_chain).start()
+    def _interrupt_on_i():
+        while input(">>> say i and press enter to interrupt: ") == "i":
+            print("\n\n!!!!!!!!!! interrupt !!!!!!!!!!!!...\n")
+            print("Heard sentence: ", vtuber_main.heard_sentence)
+            vtuber_main.interrupt(vtuber_main.heard_sentence)
 
-            if input(">>> say i and press enter to interrupt: ") == "i":
-                print("\n\n!!!!!!!!!! interrupt !!!!!!!!!!!!...\n")
-                vtuber_main.interrupt()
+    if config.get("VOICE_INPUT_ON", False):
+        threading.Thread(target=_interrupt_on_i).start()
+
+    print("tts on: ", vtuber_main.config.get("TTS_ON", False))
+    while True:
+        try:
+            vtuber_main.conversation_chain()
+        except InterruptedError as e:
+            print(f"😢Conversation was interrupted. {e}")
+            continue
