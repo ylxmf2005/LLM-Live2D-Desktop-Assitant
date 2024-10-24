@@ -3,7 +3,7 @@ window.previousTriggeredProbability = 0;
 
 porcupine = null;
 isWaitingForWakeWord = false;
-let noSpeechTimeout = null;
+noSpeechTimeout = null;
 
 async function init_vad() {
     window.myvad = await vad.MicVAD.new({
@@ -37,6 +37,7 @@ async function init_vad() {
             if (window.ws && window.ws.readyState === WebSocket.OPEN) {
                 window.sendAudioPartition(audio);
             }
+              
             resetNoSpeechTimeout();
         }
     });
@@ -58,6 +59,7 @@ window.start_mic = start_mic;
 
 async function stop_mic() {
     console.log("Mic stop");
+    
     if (window.myvad) {
         window.myvad.pause();
     }
@@ -81,6 +83,7 @@ function interrupt() {
     if (window.audioTaskQueue && typeof window.audioTaskQueue.clearQueue === 'function') {
         window.audioTaskQueue.clearQueue();
     }
+    resetNoSpeechTimeout();
     console.log("Interrupted!!!!");
 }
 
@@ -100,7 +103,7 @@ async function start_wake_word_detection() {
     console.log("Starting wake word detection...");
     isWaitingForWakeWord = true;
     
-    accessKey = ""
+    accessKey = "hwvMbvBHNquLW3tCDyYGf8F03uApjfYWJPN8uOz4knCQs6ErQ0r2mw=="
     try {
         porcupine = await PorcupineWeb.PorcupineWorker.create(
             accessKey,
@@ -124,12 +127,12 @@ async function start_wake_word_detection() {
 
 async function stop_wake_word_detection() {
     if (!isWaitingForWakeWord) return;
-
     console.log("Stopping wake word detection...");
-    await window.WebVoiceProcessor.WebVoiceProcessor.unsubscribe(porcupine);
-    await porcupine.release();
-    await porcupine.terminate();
-    porcupine = null;
+    if (porcupine) {
+        await window.WebVoiceProcessor.WebVoiceProcessor.unsubscribe(porcupine);
+        await porcupine.terminate();
+        porcupine = null;
+    }
     isWaitingForWakeWord = false;
     console.log("Wake word detection stopped.");
 }
@@ -144,10 +147,12 @@ function keywordDetectionCallback(detection) {
 function resetNoSpeechTimeout() {
     clearNoSpeechTimeout();
     noSpeechTimeout = setTimeout(() => {
-        console.log("No speech detected for 10 seconds, stopping mic.");
+        console.log("No speech detected for 15 seconds, stopping mic.");
         window.stop_mic();
-    }, 10000);
+    }, 15000);
 }
+
+window.resetNoSpeechTimeout = resetNoSpeechTimeout;
 
 function clearNoSpeechTimeout() {
     if (noSpeechTimeout) {

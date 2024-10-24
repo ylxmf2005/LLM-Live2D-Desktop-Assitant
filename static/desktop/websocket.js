@@ -88,6 +88,11 @@ function handleMessage(message) {
             }
             break;
         case "set-model":
+            window.live2dModule.init().then(() => {
+                window.live2dModule.loadModel(message.text).catch(error => {
+                    console.error("Failed to load Live2D model:", error);
+                });
+              });
             break;
         case "listExpressions":
             console.log(listSupportedExpressions());

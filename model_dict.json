@@ -110,10 +110,8 @@
     {
         "name": "Elaina",
         "description": "Elaina",
-        "url": "/live2d-models/LSS/LSS.model3.json",
-        "kScale": 0.000625,
-        "kXOffset": 1000,
-        "kYOffset": -500,
+        "url": "live2d-models/LSS/LSS.model3.json",
+        "kScale": 0.0003,
         "idleMotionGroupName": "idle",
         "emotionMap": {
             "neutral": 0,

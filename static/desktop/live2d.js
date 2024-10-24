@@ -13,33 +13,33 @@ window.live2dModule = (function () {
             backgroundAlpha: 0,
         });
 
-        await loadModel();
+        // await loadModel();
     }
 
     async function loadModel(modelInfo = {}) {
-        modelInfo["emotionMap"] = {
-            "neutral": 0,
-            "disdainful": 1,
-            "disgust": 1,
-            "sad": 2,
-            "worry": 2,
-            "confusion": 3,
-            "anger": 4,
-            "surprise": 5,
-            "expectation": 5,
-            "joy": 6,
-            "excitement": 7,
-            "pride": 8,
-            "shy": 9,
-            "dumfounded": 10,
-            "dizzy": 10,
-            "embarrassed": 11,
-            "nonchalant": 11,
-            "play_cool": 12,
-            "drink_tea": 13
-        };
-        modelInfo["url"] = "live2d-models/LSS/LSS.model3.json";
-        modelInfo["kScale"] = 0.0003;
+        // modelInfo["emotionMap"] = {
+        //     "neutral": 0,
+        //     "disdainful": 1,
+        //     "disgust": 1,
+        //     "sad": 2,
+        //     "worry": 2,
+        //     "confusion": 3,
+        //     "anger": 4,
+        //     "surprise": 5,
+        //     "expectation": 5,
+        //     "joy": 6,
+        //     "excitement": 7,
+        //     "pride": 8,
+        //     "shy": 9,
+        //     "dumfounded": 10,
+        //     "dizzy": 10,
+        //     "embarrassed": 11,
+        //     "nonchalant": 11,
+        //     "play_cool": 12,
+        //     "drink_tea": 13
+        // };
+        // modelInfo["url"] = "live2d-models/LSS/LSS.model3.json";
+        // modelInfo["kScale"] = 0.0003;
 
         emoMap = modelInfo["emotionMap"];
 
@@ -106,7 +106,7 @@ window.live2dModule = (function () {
         });
 
         window.addEventListener('mousedown', (e) => {
-            if (e.button === 2) { // 右键
+            if (e.button === 2) { 
                 const x = e.screenX;
                 const y = e.screenY;
                 window.electronAPI.showContextMenu(x, y);
@@ -120,11 +120,11 @@ window.live2dModule = (function () {
     };
 })();
 
-window.live2dModule.init().then(() => {
-  window.live2dModule.loadModel(null).catch(error => {
-      console.error("Failed to load Live2D model:", error);
-  });
-});
+// window.live2dModule.init().then(() => {
+//   window.live2dModule.loadModel(null).catch(error => {
+//       console.error("Failed to load Live2D model:", error);
+//   });
+// });
 
 function setExpression(expressionIndex) {
   expressionIndex = parseInt(expressionIndex);

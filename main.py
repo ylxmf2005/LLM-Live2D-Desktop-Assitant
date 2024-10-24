@@ -419,7 +419,9 @@ class OpenLLMVTuberMain:
                 sentence_buffer = ""
                 for char in chat_completion:
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("Producer interrupted")
+                        self._interrupt_post_processing()
+                        print("Producer interrupted")
+                        return None
                     if char:
                         print(char, end="", flush=True)
                         sentence_buffer += char
@@ -433,22 +435,22 @@ class OpenLLMVTuberMain:
                             if self.verbose:
                                 print("\n")
                             if not self._continue_exec_flag.is_set():
-                                raise InterruptedError("Producer interrupted")
+                                self._interrupt_post_processing()
+                                print("Producer interrupted")
+                                return None
                             sentence_queue.put((index, sentence_buffer))
                             index += 1
                             sentence_buffer = ""
 
                 if sentence_buffer:
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("Producer interrupted")
+                        self._interrupt_post_processing()
+                        print("Producer interrupted")
+                        return None
                     print("\n")
                     sentence_queue.put((index, sentence_buffer))
                     index += 1
 
-            except InterruptedError:
-                print("\nProducer interrupted")
-                interrupted_error_event.set()
-                return
             except Exception as e:
                 print(
                     f"Producer error: Error processing sentence.\n{e}",
@@ -462,7 +464,9 @@ class OpenLLMVTuberMain:
             try:
                 while True:
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("TTS worker interrupted")
+                        self._interrupt_post_processing()
+                        print("TTS worker interrupted")
+                        return None
                     idx, sentence = sentence_queue.get()
                     if idx is None:
                         sentence_queue.put((None, None)) 
@@ -482,7 +486,9 @@ class OpenLLMVTuberMain:
                     )
 
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("TTS worker interrupted")
+                        self._interrupt_post_processing()
+                        print("TTS worker interrupted")
+                        return None
 
                     audio_info = {
                         "index": idx,
@@ -490,10 +496,6 @@ class OpenLLMVTuberMain:
                         "audio_filepath": audio_filepath,
                     }
                     audio_queue.put(audio_info)
-            except InterruptedError:
-                print("\nTTS worker interrupted")
-                interrupted_error_event.set()
-                return
             except Exception as e:
                 print(
                     f"TTS worker error: Error generating audio for sentence.\n{e}",
@@ -510,7 +512,9 @@ class OpenLLMVTuberMain:
             try:
                 while True:
                     if not self._continue_exec_flag.is_set():
-                        raise InterruptedError("Consumer interrupted")
+                        self._interrupt_post_processing()
+                        print("Consumer interrupted")
+                        return None
                     audio_info = audio_queue.get()
                     if audio_info is None:
                         # No more audio
@@ -533,10 +537,6 @@ class OpenLLMVTuberMain:
                         )
                         expected_index += 1
 
-            except InterruptedError:
-                print("\nConsumer interrupted")
-                interrupted_error_event.set()
-                return
             except Exception as e:
                 print(
                     f"Consumer error: Error playing audio.\n{e}",

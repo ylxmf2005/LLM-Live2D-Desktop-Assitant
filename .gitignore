@@ -5,7 +5,7 @@ sing/original/*
 sing/vocal/*
 conf.yaml
 node_modules/
-
+package-lock.json
 
 
 # macOS system files

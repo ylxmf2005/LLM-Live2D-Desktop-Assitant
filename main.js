@@ -4,16 +4,15 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 let tray = null;
-let backendProcess;
 
 const contextMenu = Menu.buildFromTemplate([
   { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
   { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
   { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
+  { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) }, 
   { type: 'separator' },
   { label: 'Quit', click: () => app.quit() },
 ]);
-
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -23,7 +22,8 @@ function createWindow() {
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    hasShadow: false, 
+    hasShadow: false,
+    focusable: false, 
     webPreferences: {
       preload: path.join(__dirname, 'static', 'desktop', 'preload.js'),
       contextIsolation: true,
@@ -42,6 +42,13 @@ function createWindow() {
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
+
+  mainWindow.on('restore', () => {
+    mainWindow.setFullScreen(true);
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  });
+
+  // mainWindow.setKiosk(true);
 
   createTray();
 }
@@ -64,9 +71,19 @@ function toggleInterruption(isChecked) {
   mainWindow.webContents.send('toggle-interruption', isChecked);
 }
 
+function toggleMinimize(isChecked) {
+  if (isChecked) {
+    mainWindow.minimize();
+  } else {
+    mainWindow.restore();
+    mainWindow.setFullScreen(true);
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  }
+}
+
 app.on('ready', () => {
   startBackend();
-  setTimeout(() => {}, 1000);
+  setTimeout(() => {}, 2000);
   createWindow();
 });
 

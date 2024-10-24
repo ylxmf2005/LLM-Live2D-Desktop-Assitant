@@ -11,6 +11,7 @@ async function addAudioTask(audio_base64, instrument_base64, volumes, slice_leng
     window.audioTaskQueue.addTask(async () => {
         playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text, expression_list);
         await new Promise(resolve => setTimeout(resolve, audioLength + 100));
+        window.resetNoSpeechTimeout();
         console.log(`3. Audio task ${text} completed`);
     });
 }

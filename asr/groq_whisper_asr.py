@@ -3,7 +3,7 @@ import wave
 import numpy as np
 from groq import Groq
 from .asr_interface import ASRInterface
-
+import sounddevice as sd
 
 class VoiceRecognition(ASRInterface):
 
@@ -57,3 +57,25 @@ class VoiceRecognition(ASRInterface):
         )
 
         return transcription
+    
+
+def record_audio(duration: int, sample_rate: int) -> np.ndarray:
+    """Record audio from the microphone."""
+    print("Recording...")
+    audio = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='float32')
+    sd.wait()  # Wait until recording is finished
+    print("Recording finished.")
+    return audio.flatten()
+
+if __name__ == "__main__":
+    api_key = "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"
+    duration = 5
+    sample_rate = 16000
+
+    audio_data = record_audio(duration, sample_rate)
+
+    asr = VoiceRecognition(api_key=api_key)
+
+    transcription = asr.transcribe_np(audio_data)
+
+    print("Transcription:", transcription)
