@@ -6,6 +6,7 @@ sing/vocal/*
 conf.yaml
 node_modules/
 package-lock.json
+dist/
 
 
 # macOS system files

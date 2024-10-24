@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage} = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -59,7 +59,14 @@ function createWindow() {
 }
 
 function createTray() {
-  tray = new Tray(path.join(__dirname, 'static', 'pictures', 'icon.png'));
+  let iconPath = path.join(__dirname, 'static', 'pictures', 'icon.png');
+  if (isMac) {
+    trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    tray = new Tray(trayIcon);
+  }
+  else {
+    tray = new Tray(iconPath);
+  }
   tray.setToolTip('Elaina');
   tray.setContextMenu(contextMenu);
 }
