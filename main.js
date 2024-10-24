@@ -1,29 +1,38 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
 let mainWindow;
 let tray = null;
 
+const isMac = process.platform === 'darwin';
+
 const contextMenu = Menu.buildFromTemplate([
   { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
   { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
   { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
-  { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) }, 
+  { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
   { type: 'separator' },
   { label: 'Quit', click: () => app.quit() },
 ]);
 
 function createWindow() {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
   mainWindow = new BrowserWindow({
-    fullscreen: true,
+    width: width,
+    height: height,
+    x: 0,
+    y: 0,
     transparent: true,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     hasShadow: false,
-    focusable: false, 
+    focusable: false,
+    acceptFirstMouse: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'static', 'desktop', 'preload.js'),
       contextIsolation: true,
@@ -36,19 +45,15 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'static', 'desktop.html'));
   // mainWindow.webContents.openDevTools();
 
-  mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  if (isMac) mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  if (isMac) mainWindow.setIgnoreMouseEvents(true);
+  else mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
 
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
-
-  mainWindow.on('restore', () => {
-    mainWindow.setFullScreen(true);
-    mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  });
-
-  // mainWindow.setKiosk(true);
 
   createTray();
 }
@@ -76,19 +81,19 @@ function toggleMinimize(isChecked) {
     mainWindow.minimize();
   } else {
     mainWindow.restore();
-    mainWindow.setFullScreen(true);
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
   }
 }
 
 app.on('ready', () => {
   startBackend();
-  setTimeout(() => {}, 2000);
-  createWindow();
+  setTimeout(() => {
+    createWindow();
+  }, 1000);
 });
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') {
+  if (!isMac) {
     app.quit();
   }
 });
@@ -104,10 +109,11 @@ app.on('will-quit', () => {
 });
 
 function startBackend() {
+  const pythonExecutable = 'python';
   const scriptPath = path.join(__dirname, 'server.py');
-  backendProcess = spawn('python', [scriptPath], {
+  backendProcess = spawn(pythonExecutable, [scriptPath], {
     cwd: __dirname,
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
   });
 
   backendProcess.stdout.on('data', (data) => {
@@ -131,7 +137,8 @@ function stopBackend() {
 }
 
 ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
-  mainWindow.setIgnoreMouseEvents(ignore, { forward: true });
+  if (isMac) mainWindow.setIgnoreMouseEvents(ignore);
+  else mainWindow.setIgnoreMouseEvents(ignore, { forward: true });
 });
 
 ipcMain.on('show-context-menu', (event, x, y) => {

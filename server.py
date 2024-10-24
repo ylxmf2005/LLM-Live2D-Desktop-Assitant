@@ -11,8 +11,8 @@ from fastapi import FastAPI, WebSocket, APIRouter
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
-from main import OpenLLMVTuberMain
-from live2d_model import Live2dModel
+from module.openllm_vtuber_main import OpenLLMVTuberMain
+from module.live2d_model import Live2dModel
 from tts.stream_audio import AudioPayloadPreparer
 
 

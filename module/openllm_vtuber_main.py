@@ -1,0 +1,184 @@
+import threading
+import uuid
+import os
+import shutil
+from loguru import logger
+import __init__
+from llm.llm_factory import LLMFactory
+from asr.asr_factory import ASRFactory
+from tts.tts_factory import TTSFactory
+from translate.translate_factory import TranslateFactory
+from prompts import prompt_loader
+
+from .live2d_model import Live2dModel
+from .audio_manager import AudioManager
+from .conversation_manager import ConversationManager
+from .interrupt_manager import InterruptManager
+
+class OpenLLMVTuberMain:
+    """
+    OpenLLM VTuber 的主类。
+    初始化 Live2D 控制器、ASR、TTS 和 LLM。
+    运行 `conversation_chain` 开始对话。
+
+    属性：
+    - config (dict): 配置字典。
+    - llm (LLMInterface): LLM 实例。
+    - asr (ASRInterface): ASR 实例。
+    - tts (TTSInterface): TTS 实例。
+    """
+
+    def __init__(
+        self,
+        configs: dict,
+        custom_asr=None,
+        custom_tts=None,
+        websocket=None,
+    ) -> None:
+        logger.info(f"t41372/Open-LLM-VTuber, version {__init__.__version__}")
+        
+        self.config = configs
+        self.verbose = self.config.get("VERBOSE", False)
+        self.websocket = websocket
+        self.live2d = self.init_live2d()
+        self._continue_exec_flag = threading.Event()
+        self._continue_exec_flag.set()  # 设置继续执行的标志
+        self.session_id = str(uuid.uuid4().hex)
+
+        # 初始化 ASR
+        if self.config.get("VOICE_INPUT_ON", False):
+            if custom_asr is None:
+                self.asr = self.init_asr()
+            else:
+                print("Using custom ASR")
+                self.asr = custom_asr
+        else:
+            self.asr = None
+
+        # 初始化 TTS
+        if self.config.get("TTS_ON", False):
+            if custom_tts is None:
+                self.tts = self.init_tts()
+            else:
+                print("Using custom TTS")
+                self.tts = custom_tts
+        else:
+            self.tts = None
+
+        # 初始化翻译器
+        if self.config.get("TRANSLATE_AUDIO", False):
+            try:
+                translate_provider = self.config.get("TRANSLATE_PROVIDER", "DeepLX")
+                self.translator = TranslateFactory.get_translator(
+                    translate_provider=translate_provider,
+                    **self.config.get(translate_provider, {}),
+                )
+            except Exception as e:
+                print(f"Error initializing Translator: {e}")
+                print("Proceed without Translator.")
+                self.translator = None
+        else:
+            self.translator = None
+
+        self.llm = self.init_llm()
+
+        # 初始化 AudioManager
+        self.audio_manager = AudioManager(self.tts, self.live2d, self.translator, self.config, self.verbose)
+
+        # 初始化 ConversationManager
+        self.conversation_manager = ConversationManager(
+            self.config, self.llm, self.asr, self.tts, self.live2d, self.translator, self.audio_manager, self._continue_exec_flag, self.verbose
+        )
+
+        # 初始化 InterruptManager
+        self.interrupt_manager = InterruptManager(self.llm, self._continue_exec_flag)
+
+    # 初始化方法
+
+    def init_live2d(self):
+        if not self.config.get("LIVE2D", False):
+            return None
+        try:
+            live2d_model_name = self.config.get("LIVE2D_MODEL")
+            live2d_controller = Live2dModel(live2d_model_name)
+        except Exception as e:
+            print(f"Error initializing Live2D: {e}")
+            print("Proceed without Live2D.")
+            return None
+        return live2d_controller
+
+    def init_llm(self):
+        llm_provider = self.config.get("LLM_PROVIDER")
+        llm_config = self.config.get(llm_provider, {})
+        system_prompt = self.get_system_prompt()
+
+        llm = LLMFactory.create_llm(
+            llm_provider=llm_provider, SYSTEM_PROMPT=system_prompt, **llm_config
+        )
+        return llm
+
+    def init_asr(self):
+        asr_model = self.config.get("ASR_MODEL")
+        asr_config = self.config.get(asr_model, {})
+        asr = ASRFactory.get_asr_system(asr_model, **asr_config)
+        return asr
+
+    def init_tts(self):
+        tts_model = self.config.get("TTS_MODEL", "pyttsx3TTS")
+        tts_config = self.config.get(tts_model, {})
+        return TTSFactory.get_tts_engine(tts_model, **tts_config)
+
+    def get_song_list_str(self) -> str:
+        song_file_path = "./sing/original"
+        song_list = os.listdir(song_file_path)
+        song_list_str = "\n".join([os.path.splitext(song)[0] for song in song_list])
+        return song_list_str
+    
+    def get_system_prompt(self) -> str:
+        """
+        根据配置文件构建并返回系统提示词。
+        """
+        if self.config.get("PERSONA_CHOICE"):
+            system_prompt = prompt_loader.load_persona(
+                self.config.get("PERSONA_CHOICE")
+            )
+        else:
+            system_prompt = self.config.get("DEFAULT_PERSONA_PROMPT_IN_YAML")
+
+        if self.live2d is not None:
+            system_prompt += prompt_loader.load_util(
+                self.config.get("LIVE2D_Expression_Prompt")
+            ).replace("[<insert_emomap_keys>]", self.live2d.emo_str)
+
+        system_prompt += prompt_loader.load_util(
+            "song_prompt"
+        ).replace("[<insert_song_list>]", self.get_song_list_str())
+        
+        if self.verbose:
+            print("\n === System Prompt ===")
+            print(system_prompt)
+
+        return system_prompt
+
+    def set_audio_output_func(
+        self, audio_output_func
+    ) -> None:
+        """
+        设置用于播放音频文件的音频输出函数。
+        该函数应接受两个参数：sentence (str) 和 filepath (str)。
+        """
+        self.audio_manager.play_audio_file = audio_output_func
+
+    def clean_cache(self):
+        cache_dir = "./cache"
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+            os.makedirs(cache_dir)
+
+    # 开始对话的方法
+
+    def conversation_chain(self, user_input=None):
+        return self.conversation_manager.conversation_chain(user_input)
+
+    def interrupt(self, heard_sentence: str = "") -> None:
+        self.interrupt_manager.interrupt(heard_sentence)
