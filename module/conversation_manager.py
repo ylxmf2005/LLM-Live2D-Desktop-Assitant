@@ -7,7 +7,7 @@ import json
 from typing import Iterator
 
 class ConversationManager:
-    def __init__(self, config, llm, asr, tts, live2d, translator, audio_manager, continue_exec_flag, verbose=False):
+    def __init__(self, config, llm, asr, tts, live2d, translator, audio_manager, interrupt_manager, verbose=False):
         self.config = config
         self.llm = llm
         self.asr = asr
@@ -15,11 +15,9 @@ class ConversationManager:
         self.live2d = live2d
         self.translator = translator
         self.audio_manager = audio_manager
-        self._continue_exec_flag = continue_exec_flag
+        self.interrupt_manager = interrupt_manager
         self.verbose = verbose
         self.heard_sentence = ""
-
-    EXEC_FLAG_CHECK_TIMEOUT = 5  # seconds
 
     def conversation_chain(self, user_input: str | np.ndarray | None = None) -> str:
         """
@@ -35,9 +33,7 @@ class ConversationManager:
         - str: LLM 的完整回复
         """
 
-        if not self._continue_exec_flag.wait(
-            timeout=self.EXEC_FLAG_CHECK_TIMEOUT
-        ):  # 等待执行标志
+        if not self.interrupt_manager.wait_continue_flag():  # 等待执行标志
             print(
                 ">> Execution flag not set. In interruption state for too long. Exiting conversation chain."
             )
@@ -72,8 +68,8 @@ class ConversationManager:
         if not self.config.get("TTS_ON", False):
             full_response = ""
             for char in chat_completion:
-                if not self._continue_exec_flag.is_set():
-                    self._interrupt_post_processing()
+                if self.interrupt_manager.in_interrupt():
+                    self.interrupt_manager.interrupt_post_processing()
                     print("\nInterrupted!")
                     return None
                 full_response += char
@@ -115,9 +111,9 @@ class ConversationManager:
         else:
             full_response = ""
             for char in chat_completion:
-                if not self._continue_exec_flag.is_set():
+                if self.interrupt_manager.in_interrupt():
                     print("\nInterrupted!")
-                    self._interrupt_post_processing()
+                    self.interrupt_manager.interrupt_post_processing()
                     return None
                 print(char, end="")
                 full_response += char
@@ -131,14 +127,14 @@ class ConversationManager:
 
             filename = self.audio_manager.generate_audio_file(tts_target_sentence, "temp")
 
-            if self._continue_exec_flag.is_set():
+            if self.interrupt_manager.in_interrupt():
                 self.audio_manager.play_audio_file(
                     sentence=full_response,
                     filepath=filename,
                     instrument_filepath=None
                 )
             else:
-                self._interrupt_post_processing()
+                self.interrupt_manager.interrupt_post_processing()
 
         return full_response
 
@@ -153,7 +149,6 @@ class ConversationManager:
         - str: LLM 的完整回复
         """
         full_response = [""]  
-        interrupted_error_event = threading.Event()
 
         sentence_queue = queue.Queue()
         audio_queue = queue.Queue()
@@ -164,8 +159,8 @@ class ConversationManager:
             try:
                 sentence_buffer = ""
                 for char in chat_completion:
-                    if not self._continue_exec_flag.is_set():
-                        self._interrupt_post_processing()
+                    if self.interrupt_manager.in_interrupt():
+                        self.interrupt_manager.interrupt_post_processing()
                         print("Producer interrupted")
                         return None
                     if char:
@@ -180,8 +175,8 @@ class ConversationManager:
                         elif check_result:
                             if self.verbose:
                                 print("\n")
-                            if not self._continue_exec_flag.is_set():
-                                self._interrupt_post_processing()
+                            if self.interrupt_manager.in_interrupt():
+                                self.interrupt_manager.interrupt_post_processing()
                                 print("Producer interrupted")
                                 return None
                             sentence_queue.put((index, sentence_buffer))
@@ -189,8 +184,8 @@ class ConversationManager:
                             sentence_buffer = ""
 
                 if sentence_buffer:
-                    if not self._continue_exec_flag.is_set():
-                        self._interrupt_post_processing()
+                    if self.interrupt_manager.in_interrupt():
+                        self.interrupt_manager.interrupt_post_processing()
                         print("Producer interrupted")
                         return None
                     print("\n")
@@ -209,8 +204,8 @@ class ConversationManager:
         def tts_worker():
             try:
                 while True:
-                    if not self._continue_exec_flag.is_set():
-                        self._interrupt_post_processing()
+                    if self.interrupt_manager.in_interrupt():
+                        self.interrupt_manager.interrupt_post_processing()
                         print("TTS worker interrupted")
                         return None
                     idx, sentence = sentence_queue.get()
@@ -231,8 +226,8 @@ class ConversationManager:
                         tts_target_sentence, file_name_no_ext=f"temp-{idx}"
                     )
 
-                    if not self._continue_exec_flag.is_set():
-                        self._interrupt_post_processing()
+                    if self.interrupt_manager.in_interrupt():
+                        self.interrupt_manager.interrupt_post_processing()
                         print("TTS worker interrupted")
                         return None
 
@@ -257,8 +252,8 @@ class ConversationManager:
             self.heard_sentence = ""
             try:
                 while True:
-                    if not self._continue_exec_flag.is_set():
-                        self._interrupt_post_processing()
+                    if self.interrupt_manager.in_interrupt():
+                        self.interrupt_manager.interrupt_post_processing()
                         print("Consumer interrupted")
                         return None
                     audio_info = audio_queue.get()

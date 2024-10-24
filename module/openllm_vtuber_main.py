@@ -1,4 +1,3 @@
-import threading
 import uuid
 import os
 import shutil
@@ -41,11 +40,10 @@ class OpenLLMVTuberMain:
         self.verbose = self.config.get("VERBOSE", False)
         self.websocket = websocket
         self.live2d = self.init_live2d()
-        self._continue_exec_flag = threading.Event()
-        self._continue_exec_flag.set()  # 设置继续执行的标志
+          # 设置继续执行的标志
         self.session_id = str(uuid.uuid4().hex)
 
-        # 初始化 ASR
+        # ASR
         if self.config.get("VOICE_INPUT_ON", False):
             if custom_asr is None:
                 self.asr = self.init_asr()
@@ -55,7 +53,7 @@ class OpenLLMVTuberMain:
         else:
             self.asr = None
 
-        # 初始化 TTS
+        # TTS
         if self.config.get("TTS_ON", False):
             if custom_tts is None:
                 self.tts = self.init_tts()
@@ -65,7 +63,7 @@ class OpenLLMVTuberMain:
         else:
             self.tts = None
 
-        # 初始化翻译器
+        # Translator
         if self.config.get("TRANSLATE_AUDIO", False):
             try:
                 translate_provider = self.config.get("TRANSLATE_PROVIDER", "DeepLX")
@@ -82,19 +80,14 @@ class OpenLLMVTuberMain:
 
         self.llm = self.init_llm()
 
-        # 初始化 AudioManager
         self.audio_manager = AudioManager(self.tts, self.live2d, self.translator, self.config, self.verbose)
+        
+        self.interrupt_manager = InterruptManager(self.llm)
 
-        # 初始化 ConversationManager
         self.conversation_manager = ConversationManager(
-            self.config, self.llm, self.asr, self.tts, self.live2d, self.translator, self.audio_manager, self._continue_exec_flag, self.verbose
+            self.config, self.llm, self.asr, self.tts, self.live2d, self.translator, self.audio_manager, self.interrupt_manager, self.verbose
         )
-
-        # 初始化 InterruptManager
-        self.interrupt_manager = InterruptManager(self.llm, self._continue_exec_flag)
-
-    # 初始化方法
-
+        
     def init_live2d(self):
         if not self.config.get("LIVE2D", False):
             return None
