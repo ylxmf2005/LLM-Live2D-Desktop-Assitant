@@ -43,7 +43,7 @@ class LLM(LLMInterface):
     def __printDebugInfo(self):
         print(" -- System: " + self.system)
 
-    def chat_iter(self, prompt: str) -> Iterator[str]:
+    def chat_iter(self, prompt: str, image_base64 = None) -> Iterator[str]:
 
         self.memory.append(
             {

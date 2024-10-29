@@ -67,7 +67,7 @@ class WebSocketServer:
             open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_config)
             audio_payload_preparer = AudioPayloadPreparer()
 
-            def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath : str | None) -> None:
+            def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath : str | None = None) -> None:
                 if filepath is None:
                     print("No audio to be streamed. Response is empty.")
                     return

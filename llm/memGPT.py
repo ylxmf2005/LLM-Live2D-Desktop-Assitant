@@ -32,7 +32,7 @@ class LLM(LLMInterface):
         }
         self.verbose = verbose
 
-    def chat_iter(self, prompt) -> Iterator[str]:
+    def chat_iter(self, prompt, image_base64 = None) -> Iterator[str]:
         full_response = self._send_message_to_agent(prompt, callback_function=print)
         # memGPT will handle the memory, so no need to deal with it here
         return full_response

@@ -3,6 +3,7 @@
 Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and make the following modifications / new features:
 
 - Integrate with Electron to be the **desktop partner**. The desktop-mode supports both Windows and MacOS.
+- Add screen sensing function and clipboard content retrieval.
 - Write an Elaina **persona prompt**.
 - Set the [Elaina(LSS)](https://www.aplaybox.com/details/model/0MAXIOhAZAUw) as the default **Live2D model** and create some **expressions and poses**.
 - Use [GPTSoVITS](https://github.com/RVC-Boss/GPT-SoVITS) as the TTS model to **clone Elaina's timbre**.
@@ -45,7 +46,6 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 
 ### To Do List
 - Sync with the upstream repository (Continuous work).
-- Add screen sensing function and clipboard content retrieval (On-going).
 - Use smarter algorithms to detect if the user has stopped speaking.
 - Enhance the UI by adding input field, chat history.
 - Add more expressions and poses like random idle poses. 

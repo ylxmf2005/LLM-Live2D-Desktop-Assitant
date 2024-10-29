@@ -35,7 +35,7 @@ class AudioPayloadPreparer:
         return [volume / max_volume for volume in volumes]
 
     def prepare_audio_payload(
-        self, audio_path, instrument_path, display_text=None, expression_list=None
+        self, audio_path, instrument_path = None, display_text=None, expression_list=None
     ):
         """
         Prepares the audio payload for sending to a broadcast endpoint.

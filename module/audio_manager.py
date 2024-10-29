@@ -8,14 +8,14 @@ class AudioManager:
 
     def generate_audio_file(self, sentence: str, file_name_no_ext: str) -> str | None:
         """
-        使用 TTS 引擎从给定句子生成音频文件。
+        Generate an audio file from a given sentence using the TTS engine.
 
-        参数：
-        - sentence (str): 要生成音频的句子
-        - file_name_no_ext (str): 音频文件的名称（不含扩展名）
+        Parameters:
+        - sentence (str): The sentence to generate audio for
+        - file_name_no_ext (str): The name of the audio file (without extension)
 
-        返回：
-        - str 或 None: 生成的音频文件路径，如果句子为空则返回 None
+        Returns:
+        - str or None: The path of the generated audio file, or None if the sentence iempty
         """
         if self.verbose:
             print(f">> generating {file_name_no_ext}...")
@@ -33,11 +33,7 @@ class AudioManager:
 
     def play_audio_file(self, sentence: str | None, filepath: str | None, instrument_filepath: str | None = None) -> None:
         """
-        播放音频文件。
-
-        参数：
-        - sentence (str): 要显示的句子
-        - filepath (str): 音频文件的路径。如果为 None，则不播放音频。
+        Play the audio file located at the given filepath.
         """
         if filepath is None:
             print("No audio to be streamed. Response is empty.")
@@ -61,12 +57,6 @@ class AudioManager:
             print(f"Error playing the audio file {filepath}: {e}")
 
     def play_text(self, text: str) -> None:
-        """
-        从文本生成音频并播放。
-
-        参数：
-        - text (str): 要转换为语音并播放的文本。
-        """
         if not text.strip():
             print("No text to play.")
             return

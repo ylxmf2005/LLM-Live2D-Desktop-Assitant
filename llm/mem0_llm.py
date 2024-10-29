@@ -69,7 +69,7 @@ class LLM(LLMInterface):
         # Add a memory
         # self.mem0.add("I'm visiting Paris", user_id="john")
 
-    def chat_iter(self, prompt: str) -> Iterator[str]:
+    def chat_iter(self, prompt: str, image_base64 = None) -> Iterator[str]:
 
         logger.debug("All Mem:")
         logger.debug(self.mem0.get_all(user_id=self.user_id))

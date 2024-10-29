@@ -15,17 +15,6 @@ from .conversation_manager import ConversationManager
 from .interrupt_manager import InterruptManager
 
 class OpenLLMVTuberMain:
-    """
-    OpenLLM VTuber 的主类。
-    初始化 Live2D 控制器、ASR、TTS 和 LLM。
-    运行 `conversation_chain` 开始对话。
-
-    属性：
-    - config (dict): 配置字典。
-    - llm (LLMInterface): LLM 实例。
-    - asr (ASRInterface): ASR 实例。
-    - tts (TTSInterface): TTS 实例。
-    """
 
     def __init__(
         self,
@@ -40,7 +29,6 @@ class OpenLLMVTuberMain:
         self.verbose = self.config.get("VERBOSE", False)
         self.websocket = websocket
         self.live2d = self.init_live2d()
-          # 设置继续执行的标志
         self.session_id = str(uuid.uuid4().hex)
 
         # ASR
@@ -128,9 +116,6 @@ class OpenLLMVTuberMain:
         return song_list_str
     
     def get_system_prompt(self) -> str:
-        """
-        根据配置文件构建并返回系统提示词。
-        """
         if self.config.get("PERSONA_CHOICE"):
             system_prompt = prompt_loader.load_persona(
                 self.config.get("PERSONA_CHOICE")
@@ -156,10 +141,6 @@ class OpenLLMVTuberMain:
     def set_audio_output_func(
         self, audio_output_func
     ) -> None:
-        """
-        设置用于播放音频文件的音频输出函数。
-        该函数应接受两个参数：sentence (str) 和 filepath (str)。
-        """
         self.audio_manager.play_audio_file = audio_output_func
 
     def clean_cache(self):
@@ -167,8 +148,6 @@ class OpenLLMVTuberMain:
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir)
-
-    # 开始对话的方法
 
     def conversation_chain(self, user_input=None):
         return self.conversation_manager.conversation_chain(user_input)

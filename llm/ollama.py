@@ -8,7 +8,7 @@ OpenAI, and more.
 from typing import Iterator
 import json
 from openai import OpenAI
-
+from zhipuai import ZhipuAI
 from .llm_interface import LLMInterface
 
 
@@ -45,12 +45,17 @@ class LLM(LLMInterface):
         self.callback = callback
         self.memory = []
         self.verbose = verbose
-        self.client = OpenAI(
-            base_url=base_url,
-            organization=organization_id,
-            project=project_id,
-            api_key=llm_api_key,
-        )
+        if "glm" in model:
+            self.client = ZhipuAI(
+                api_key = llm_api_key
+            )
+        else: 
+            self.client = OpenAI(
+                base_url=base_url,
+                organization=organization_id,
+                project=project_id,
+                api_key=llm_api_key,
+            )
 
         self.__set_system(system)
 
@@ -85,14 +90,35 @@ class LLM(LLMInterface):
         print(" -- Model: " + self.model)
         print(" -- System: " + self.system)
 
-    def chat_iter(self, prompt: str) -> Iterator[str]:
+    def chat_iter(self, prompt: str, image_base64 = None) -> Iterator[str]:
+        prompt += "\n请用英文回复我. Please reply in English."
 
-        self.memory.append(
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        )
+        if image_base64 == None:
+            self.memory.append(
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            )
+        
+        else:
+            self.memory.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_base64
+                            }
+                        }
+                    ]
+                }
+            )
 
         if self.verbose:
             self.__print_memory()

@@ -4,7 +4,9 @@ import random
 import numpy as np
 import os
 import json
+import uuid
 from typing import Iterator
+from .computer_manager import get_clipboard_content, copy_selected_content
 
 class ConversationManager:
     def __init__(self, config, llm, asr, tts, live2d, translator, audio_manager, interrupt_manager, verbose=False):
@@ -19,29 +21,15 @@ class ConversationManager:
         self.verbose = verbose
         self.heard_sentence = ""
 
-    def conversation_chain(self, user_input: str | np.ndarray | None = None) -> str:
-        """
-        一次完整的对话流程。
-        1. 获取用户输入（文本或音频）
-        2. 调用 LLM 生成回复
-        3. 播放回复
-
-        参数：
-        - user_input (str, numpy array, or None): 用户输入。
-
-        返回：
-        - str: LLM 的完整回复
-        """
-
-        if not self.interrupt_manager.wait_continue_flag():  # 等待执行标志
+    def conversation_chain(self, user_input: str | np.ndarray | None = None,    clipboard_mode: str = "auto") -> str:
+        if not self.interrupt_manager.wait_continue_flag(): 
             print(
-                ">> Execution flag not set. In interruption state for too long. Exiting conversation chain."
+                ">> Execution flag not set. In interruption state for too long. Exiting     conversation chain."
             )
             raise InterruptedError(
                 "Conversation chain interrupted. Wait flag timeout reached."
             )
 
-        # 生成随机颜色代码
         color_code = random.randint(0, 3)
         c = [None] * 4
         c[0] = "\033[91m"
@@ -63,7 +51,29 @@ class ConversationManager:
 
         print(f"User input: {user_input}")
 
-        chat_completion: Iterator[str] = self.llm.chat_iter(user_input)
+        if clipboard_mode == "auto":
+            if "选中" in user_input or "选取" in user_input:
+                clipboard_mode = "copy"
+            else:
+                clipboard_mode = "direct"
+
+        clipboard_content = None
+        if clipboard_mode == "copy":
+            copy_selected_content()
+            clipboard_content = get_clipboard_content()
+        elif clipboard_mode == "direct":
+            clipboard_content = get_clipboard_content()
+        elif clipboard_mode is None:
+            pass  
+                
+        if "text" in clipboard_content:
+            user_input += f"\nCopied text:\n{clipboard_content['text']}\n"
+        
+        image_base64 = None
+        if "image" in clipboard_content:
+            image_base64 = clipboard_content["image"]
+        
+        chat_completion: Iterator[str] = self.llm.chat_iter(user_input, image_base64)
 
         if not self.config.get("TTS_ON", False):
             full_response = ""
@@ -83,10 +93,8 @@ class ConversationManager:
         print(f"{c[color_code]}Conversation completed.")
         return full_response
 
+
     def get_user_input(self) -> str:
-        """
-        根据配置获取用户输入。
-        """
         if self.config.get("VOICE_INPUT_ON", False):
             print("Listening from the microphone...")
             return self.asr.transcribe_with_local_vad()
@@ -94,15 +102,6 @@ class ConversationManager:
             return input("\n>> ")
 
     def speak(self, chat_completion: Iterator[str]) -> str:
-        """
-        使用 TTS 引擎播放回复。
-
-        参数：
-        - chat_completion (Iterator[str]): LLM 的回复
-
-        返回：
-        - str: LLM 的完整回复
-        """
         full_response = ""
         if self.config.get("SAY_SENTENCE_SEPARATELY", True):
             full_response = self.speak_by_sentence_chain(
@@ -139,15 +138,6 @@ class ConversationManager:
         return full_response
 
     def speak_by_sentence_chain(self, chat_completion: Iterator[str]) -> str:
-        """
-        一句一句地生成并播放回复。
-
-        参数：
-        - chat_completion (Iterator[str]): LLM 的回复
-     
-        返回：
-        - str: LLM 的完整回复
-        """
         full_response = [""]  
 
         sentence_queue = queue.Queue()
@@ -266,7 +256,6 @@ class ConversationManager:
                     idx = audio_info["index"]
                     audio_buffer[idx] = audio_info
 
-                    # 按顺序播放句子
                     while expected_index in audio_buffer:
                         info = audio_buffer.pop(expected_index)
                         if self.verbose:
@@ -356,12 +345,6 @@ class ConversationManager:
 
     def sing(self, response_text):
         print("sing mode activated")
-        """
-        处理唱歌功能。
-
-        参数：
-        - response_text (str): 包含歌曲信息的完整回复文本
-        """
         try:
             data = json.loads(response_text)
             song_name = data.get("song_name")
