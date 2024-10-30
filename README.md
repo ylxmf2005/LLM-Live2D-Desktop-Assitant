@@ -7,10 +7,9 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mak
 - Write an Elaina **persona prompt**.
 - Set the [Elaina(LSS)](https://www.aplaybox.com/details/model/0MAXIOhAZAUw) as the default **Live2D model** and create some **expressions and poses**.
 - Use [GPTSoVITS](https://github.com/RVC-Boss/GPT-SoVITS) as the TTS model to **clone Elaina's timbre**.
-- Improve `speak_by_sentence_chain` to **concurrently TTS** subsequent streaming sentences while the current sentence is being spoken and fix the audio missing bug.
+- Improve `speak_by_sentence_chain` to **concurrently TTS** subsequent streaming sentences while the current sentence is being spoken.
 - Add a voice wake-up feature. Elaina enters a sleep mode after a certain period (10s) of inactivity following each conversation chain. She can be reactivated using the wake word "Elaina".
 - Add **singing functionality** using [Retrieval-based-Voice-Conversion](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI).
-- Disable the pointer following, fixed conflict between eyeblink and expressions.
 
 ### Demo
 
