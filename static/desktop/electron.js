@@ -7,6 +7,15 @@ window.electronAPI.onToggleSubtitles((isChecked) => {
     }
 });
 
+window.electronAPI.onToggleWakeUp((isChecked) => {
+    window.wakeWordDetectionOn = isChecked;
+    if (isChecked) {
+        window.start_wake_word_detection();
+    } else {
+        window.stop_wake_word_detection();
+    }
+});
+
 window.electronAPI.onToggleMicrophone((isChecked) => {
     if (isChecked) {
         window.start_mic();

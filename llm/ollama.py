@@ -182,6 +182,7 @@ class LLM(LLMInterface):
                 messages=self.memory,
                 model=model_to_use,
                 stream=True,
+                max_tokens=512,
             )
         except Exception as e:
             print("Error calling the chat endpoint: " + str(e))

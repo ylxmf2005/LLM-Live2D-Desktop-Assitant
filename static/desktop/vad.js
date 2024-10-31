@@ -1,5 +1,6 @@
 window.myvad = null;
 window.previousTriggeredProbability = 0;
+window.wakeWordDetectionOn = true;
 
 porcupine = null;
 isWaitingForWakeWord = false;
@@ -65,7 +66,9 @@ async function stop_mic() {
     }
     window.electronAPI.updateMenuChecked("Microphone", false);
     clearNoSpeechTimeout();
-    await start_wake_word_detection();
+    
+    if (window.wakeWordDetectionOn)
+        await start_wake_word_detection();
 }
 
 window.stop_mic = stop_mic;
@@ -170,3 +173,5 @@ window.addEventListener("beforeunload", async () => {
         await stop_wake_word_detection();
     }
 });
+
+

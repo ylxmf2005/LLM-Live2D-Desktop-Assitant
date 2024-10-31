@@ -11,6 +11,7 @@ const contextMenu = Menu.buildFromTemplate([
   { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
   { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
   { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
+  { label: 'Wake-up', type: 'checkbox', checked: true, click: (menuItem) => toggleWakeUp(menuItem.checked) },
   { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
   { type: 'separator' },
   { label: 'Quit', click: () => app.quit() },
@@ -83,6 +84,10 @@ function toggleInterruption(isChecked) {
   mainWindow.webContents.send('toggle-interruption', isChecked);
 }
 
+function toggleWakeUp(isChecked) {
+  mainWindow.webContents.send('toggle-wake-up', isChecked);
+}
+
 function toggleMinimize(isChecked) {
   if (isChecked) {
     mainWindow.minimize();
@@ -90,6 +95,10 @@ function toggleMinimize(isChecked) {
     mainWindow.restore();
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
   }
+}
+
+function toggleWakeUp(isChecked) {
+  mainWindow.webContents.send('toggle-wake-up', isChecked);
 }
 
 app.on('ready', () => {
