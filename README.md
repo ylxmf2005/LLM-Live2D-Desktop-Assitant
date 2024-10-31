@@ -11,6 +11,8 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mak
 - Add a voice wake-up feature. Elaina enters a sleep mode after a certain period (10s) of inactivity following each conversation chain. She can be reactivated using the wake word "Elaina".
 - Add **singing functionality** using [Retrieval-based-Voice-Conversion](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI).
 - Disable the pointer following, fixed conflict between eyeblink and expressions.
+- Add functionality of controlling computers / interact with local files, using [claude-computer-use](https://docs.anthropic.com/en/docs/build-with-claude/computer-use).
+
 
 ### Demo
 
@@ -50,7 +52,6 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 - Enhance the UI by adding input field, chat history.
 - Add more expressions and poses like random idle poses. 
 - Allow the LLM to access the Internet.
-- Add functionality of controlling computers / interact with local files, like [claude-computer-use](https://docs.anthropic.com/en/docs/build-with-claude/computer-use) or [self-operating-computer](https://github.com/OthersideAI/self-operating-computer).
 
 
 ### Acknowledgement

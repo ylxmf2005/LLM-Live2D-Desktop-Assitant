@@ -1,3 +1,5 @@
+import re
+import uuid
 class AudioManager:
     def __init__(self, tts, live2d, translator, config, verbose=False):
         self.tts = tts
@@ -5,6 +7,9 @@ class AudioManager:
         self.translator = translator
         self.config = config
         self.verbose = verbose
+        
+    def clean_text(self, text: str) -> str:
+        return re.sub(r'[^\u4e00-\u9fffA-Za-z0-9,]', ' ', text)
 
     def generate_audio_file(self, sentence: str, file_name_no_ext: str) -> str | None:
         """
@@ -17,6 +22,7 @@ class AudioManager:
         Returns:
         - str or None: The path of the generated audio file, or None if the sentence iempty
         """
+        sentence = self.clean_text(sentence)
         if self.verbose:
             print(f">> generating {file_name_no_ext}...")
 
@@ -57,22 +63,28 @@ class AudioManager:
             print(f"Error playing the audio file {filepath}: {e}")
 
     def play_text(self, text: str) -> None:
-        if not text.strip():
-            print("No text to play.")
-            return
+            if not text.strip():
+                print("No text to play.")
+                return
 
-        tts_target_sentence = self.live2d.remove_emotion_keywords(text)
+            sentences = re.split(r'(?<=[.!?。！？])\s*', text)
+            sentences = [s for s in sentences if s.strip()] 
 
-        if self.translator and self.config.get("TRANSLATE_AUDIO", False):
-            print("Translating...")
-            tts_target_sentence = self.translator.translate(tts_target_sentence)
-            print(f"Translated: {tts_target_sentence}")
+            for sentence in sentences:                
+                tts_target_sentence = self.live2d.remove_emotion_keywords(sentence)
 
-        audio_filepath = self.generate_audio_file(
-            tts_target_sentence, file_name_no_ext="temp_text"
-        )
+                if self.translator and self.config.get("TRANSLATE_AUDIO",   False):
+                    print("Translating...")
+                    tts_target_sentence = self.translator.translate (tts_target_sentence)
+                    print(f"Translated: {tts_target_sentence}")
 
-        if audio_filepath:
-            self.play_audio_file(sentence=text, filepath=audio_filepath)
-        else:
-            print("No audio generated.")
+                audio_filepath = self.generate_audio_file(
+                    tts_target_sentence, file_name_no_ext=f"temp_text_{uuid.uuid4()}"
+                )
+
+                if audio_filepath:
+                    self.play_audio_file(sentence=sentence,     filepath=audio_filepath)
+                else:
+                    print("No audio generated for sentence.")
+
+

@@ -19,3 +19,6 @@ groq
 edge-tts
 httpx
 pyyaml
+anthropic[bedrock,vertex]>=0.37.1
+pillow
+PyAutoGUI

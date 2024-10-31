@@ -39,10 +39,12 @@ class WebSocketServer:
         self.server_ws_clients: List[WebSocket] = []
         self.open_llm_vtuber: OpenLLMVTuberMain | None = None
         self.open_llm_vtuber_config: Dict | None = open_llm_vtuber_config
+        
         self._setup_routes()
         if web:
             self._mount_static_files()
         self.app.include_router(self.router)
+        
 
     def _setup_routes(self):
         """Sets up the WebSocket and broadcast routes."""
@@ -56,6 +58,7 @@ class WebSocketServer:
 
         @self.app.websocket("/client-ws")
         async def websocket_endpoint(websocket: WebSocket):
+            loop = asyncio.get_event_loop()
             await websocket.accept()
             await websocket.send_text(
                 json.dumps({"type": "full-text", "text": "Connection established"})
@@ -64,7 +67,7 @@ class WebSocketServer:
             self.connected_clients.append(websocket)
             print("Connection established")
             l2d = Live2dModel(self.open_llm_vtuber_config["LIVE2D_MODEL"])
-            open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_config)
+            open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_config, loop = loop)
             audio_payload_preparer = AudioPayloadPreparer()
 
             def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath : str | None = None) -> None:
@@ -88,10 +91,8 @@ class WebSocketServer:
                     await websocket.send_text(json.dumps(payload))
                     await asyncio.sleep(duration)
 
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                new_loop.run_until_complete(_send_audio())
-                new_loop.close()
+                asyncio.run_coroutine_threadsafe(_send_audio(), loop)
+
 
                 print("Audio played.")
 

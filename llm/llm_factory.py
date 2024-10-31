@@ -12,12 +12,22 @@ class LLMFactory:
         if llm_provider == "ollama":
             return OllamaLLM(
                 system=kwargs.get("SYSTEM_PROMPT"),
+                tools=kwargs.get("tools"),
+                caller=kwargs.get("caller"),
                 base_url=kwargs.get("BASE_URL"),
                 model=kwargs.get("MODEL"),
                 llm_api_key=kwargs.get("LLM_API_KEY"),
                 project_id=kwargs.get("PROJECT_ID"),
                 organization_id=kwargs.get("ORGANIZATION_ID"),
                 verbose=kwargs.get("VERBOSE", False),
+                
+                v_base_url=kwargs.get("V_BASE_URL", None),
+                v_model=kwargs.get("V_MODEL", None),
+                v_organization_id=kwargs.get("V_ORGANIZATION_ID"),
+                v_project_id=kwargs.get("V_PROJECT_ID"),
+                vllm_api_key=kwargs.get("VLLM_API_KEY"),
+                clipboard_history=kwargs.get("CLIPBOARD_HISTORY", False),
+                max_history_cnt=kwargs.get("MAX_HISTORY_CNT", -1),                
             )
         elif llm_provider == "mem0":
             from llm.mem0 import LLM as Mem0LLM

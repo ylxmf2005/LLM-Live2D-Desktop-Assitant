@@ -18,12 +18,22 @@ class LLM(LLMInterface):
         self,
         base_url: str,
         model: str,
+        tools: list[dict],
+        caller: callable,
         system: str,
         callback=print,
         organization_id: str = "z",
         project_id: str = "z",
         llm_api_key: str = "z",
+        
+        v_base_url: str = None,
+        v_model: str = None,
+        v_organization_id: str = "z",
+        v_project_id: str = "z",
+        vllm_api_key: str = "z",
         verbose: bool = False,
+        clipboard_history: bool = None,
+        max_history_cnt: int = -1
     ):
         """
         Initializes an instance of the `ollama` class.
@@ -41,21 +51,46 @@ class LLM(LLMInterface):
 
         self.base_url = base_url
         self.model = model
+        self.v_model = v_model
         self.system = system
         self.callback = callback
         self.memory = []
         self.verbose = verbose
-        if "glm" in model:
-            self.client = ZhipuAI(
-                api_key = llm_api_key
-            )
-        else: 
-            self.client = OpenAI(
-                base_url=base_url,
-                organization=organization_id,
-                project=project_id,
-                api_key=llm_api_key,
-            )
+        try:
+            if "glm" in model:
+                self.client = ZhipuAI(
+                    api_key = llm_api_key
+                )
+            else: 
+                self.client = OpenAI(
+                    base_url=base_url,
+                    organization=organization_id,
+                    project=project_id,
+                    api_key=llm_api_key,
+                )
+
+            print(vllm_api_key, v_model, v_base_url, v_project_id, v_organization_id)
+
+            if v_model:
+                if "glm" in v_model:
+                    self.v_client = ZhipuAI(
+                        api_key = vllm_api_key
+                    )
+                else:
+                    self.v_client = OpenAI(
+                        base_url=v_base_url,
+                        organization=v_organization_id,
+                        project=v_project_id,
+                        api_key=vllm_api_key,
+                    )
+            elif verbose:
+                print("Vision model not provided.")
+        except Exception as e:
+            print("Error initializing the client: " + str(e))
+            return
+        
+        self.clipboard_history = clipboard_history
+        self.max_history_cnt = max_history_cnt
 
         self.__set_system(system)
 
@@ -91,7 +126,9 @@ class LLM(LLMInterface):
         print(" -- System: " + self.system)
 
     def chat_iter(self, prompt: str, image_base64 = None) -> Iterator[str]:
-        prompt += "\n请用英文回复我. Please reply in English."
+        prompt += "\nPlease reply in English."
+        clipboard_flag = False
+        vision_flag = False
 
         if image_base64 == None:
             self.memory.append(
@@ -100,8 +137,12 @@ class LLM(LLMInterface):
                     "content": prompt,
                 }
             )
+            if "Copied_text" in prompt:
+                clipboard_flag = True
         
         else:
+            clipboard_flag = True
+            vision_flag = True
             self.memory.append(
                 {
                     "role": "user",
@@ -113,12 +154,20 @@ class LLM(LLMInterface):
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": image_base64
+                                "url": image_base64 if "glm" in     self.v_model else f"data:image/jpeg;base64,{image_base64}"
                             }
                         }
                     ]
                 }
             )
+            
+            
+        if vision_flag:
+            client_to_use = self.v_client
+            model_to_use = self.v_model
+        else:
+            client_to_use = self.client
+            model_to_use = self.model
 
         if self.verbose:
             self.__print_memory()
@@ -129,15 +178,18 @@ class LLM(LLMInterface):
 
         chat_completion = []
         try:
-            chat_completion = self.client.chat.completions.create(
+            chat_completion = client_to_use.chat.completions.create(
                 messages=self.memory,
-                model=self.model,
+                model=model_to_use,
                 stream=True,
             )
         except Exception as e:
             print("Error calling the chat endpoint: " + str(e))
             self.__printDebugInfo()
             return "Error calling the chat endpoint: " + str(e)
+        
+        if not self.clipboard_history and clipboard_flag:
+            self.memory.pop()
 
         # a generator to give back an iterator to the response that will store
         # the complete response in memory once the iteration is done
@@ -149,12 +201,13 @@ class LLM(LLMInterface):
                 yield chunk.choices[0].delta.content
                 complete_response += chunk.choices[0].delta.content
 
-            self.memory.append(
-                {
-                    "role": "assistant",
-                    "content": complete_response,
-                }
-            )
+            if self.clipboard_history or not clipboard_flag:
+                self.memory.append(
+                    {
+                        "role": "assistant",
+                        "content": complete_response,
+                    }
+                )
 
             def serialize_memory(memory, filename):
                 with open(filename, "w") as file:

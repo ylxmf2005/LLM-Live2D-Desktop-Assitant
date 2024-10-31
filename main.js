@@ -96,7 +96,7 @@ app.on('ready', () => {
   startBackend();
   setTimeout(() => {
     createWindow();
-  }, 1000);
+  }, 3000);
 });
 
 app.on('window-all-closed', function () {

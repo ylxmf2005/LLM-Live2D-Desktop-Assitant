@@ -1,0 +1,40 @@
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "sing_song",
+            "description": "Select a song name that best matches user request to sing if the user asks you to sing a song.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "song_name": {
+                        "type": "string",
+                        "enum": []
+                    }
+                },
+                "required": [
+                    "song_name"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "control_computer",
+            "description": "Use this function if the user asks you to control the computer.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "instruction": {
+                        "type": "string",
+                        "description": "instruction to control the computer"
+                    }
+                },
+                "required": [
+                    "instruction "
+                ]
+            }
+        }
+    }
+]

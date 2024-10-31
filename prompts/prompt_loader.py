@@ -1,4 +1,5 @@
 import os
+import json
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,3 +21,8 @@ def load_util(util_name: str) -> str:
     """Load the content of a specific utility prompt file."""
     util_file_path = os.path.join(UTIL_PROMPT_DIR, f'{util_name}.txt')
     return _load_file_content(util_file_path)
+
+def load_util_json(util_name: str) -> dict:
+    util_file_path = os.path.join(UTIL_PROMPT_DIR, f'{util_name}.json')
+    with open(util_file_path, 'r', encoding='utf-8') as file:
+        return json.load(file)
