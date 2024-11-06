@@ -20,7 +20,7 @@ class TTSEngine(TTSInterface):
         self.engine = pyttsx3.init()
         self.temp_audio_file = "temp"
         self.file_extension = "aiff"
-        self.new_audio_dir = "./cache"
+        self.new_audio_dir = "cache"
         self.lock = threading.Lock()
 
         if not os.path.exists(self.new_audio_dir):
@@ -29,13 +29,7 @@ class TTSEngine(TTSInterface):
     #! This method (pyttsx3) is not thread safe. It will blow if it's called from multiple threads at the same time.
     def generate_audio(self, text, file_name_no_ext=None):
         print(f"Start Generating {file_name_no_ext}")
-        file_name = "temp"
-        if file_name_no_ext is None:
-            file_name = self.temp_audio_file
-        else:
-            file_name = file_name_no_ext
-
-        file_name = str(Path(self.new_audio_dir) / f"{file_name}.{self.file_extension}")
+        file_name = self.generate_cache_file_name(file_name_no_ext, self.file_extension)
 
         with self.lock:
             self.engine.save_to_file(text=text, filename=file_name)

@@ -5,9 +5,8 @@ from playsound3 import playsound
 
 class TTSInterface(metaclass=abc.ABCMeta):
 
-
     @abc.abstractmethod
-    def generate_audio(self, text:str, file_name_no_ext=None):
+    def generate_audio(self, text: str, file_name_no_ext=None) -> str:
         """
         Generate speech audio file using TTS.
         text: str
@@ -48,4 +47,26 @@ class TTSInterface(metaclass=abc.ABCMeta):
             the path to the audio file
         """
         playsound(audio_file_path)
-        # print(f">> Finished playing audio file {audio_file_path}")
+        
+
+    def generate_cache_file_name(self, file_name_no_ext=None, file_extension="wav"):
+        """
+        Generate a cross-platform cache file name.
+
+        file_name_no_ext: str
+            name of the file without extension
+        file_extension: str
+            file extension
+
+        Returns:
+        str: the path to the generated cache file
+        """
+        cache_dir = "./cache"
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        if file_name_no_ext is None:
+            file_name_no_ext = "temp"
+
+        file_name = f"{file_name_no_ext}.{file_extension}"
+        return os.path.join(cache_dir, file_name)

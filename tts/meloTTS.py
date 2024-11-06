@@ -31,7 +31,7 @@ class TTSEngine(TTSInterface):
 
         self.temp_audio_file = "temp"
         self.file_extension = "wav"
-        self.new_audio_dir = "./cache"
+        self.new_audio_dir = "cache"
 
         if not os.path.exists(self.new_audio_dir):
             os.makedirs(self.new_audio_dir)
@@ -50,15 +50,7 @@ class TTSEngine(TTSInterface):
 
         """
         try:
-            file_name = "temp"
-            if file_name_no_ext is None:
-                file_name = self.temp_audio_file
-            else:
-                file_name = file_name_no_ext
-
-            file_name = str(
-                Path(self.new_audio_dir) / f"{file_name}.{self.file_extension}"
-            )
+            file_name = self.generate_cache_file_name(file_name_no_ext, self.file_extension)
 
             # Default accent
             self.model.tts_to_file(

@@ -1,9 +1,9 @@
 body {
-  /* background-image: url("./bg/ceiling-window-room-night.jpeg");
+  background-image: url("./bg/cityscape.jpeg");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
-  background-attachment: fixed; */
+  background-attachment: fixed;
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -28,7 +28,7 @@ body {
 }
 
 #wsStatus.connected {
-  background-color: #4caf50;
+    background-color: #4caf50;
 }
 
 #stateDisplay {
@@ -107,6 +107,18 @@ canvas {
   z-index: 1;
 }
 
-.hidden {
-  display: none;
+/* Styles for the dropdown lists */
+select {
+  padding: 5px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: #005f7f;
 }

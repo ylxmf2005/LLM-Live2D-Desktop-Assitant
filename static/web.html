@@ -21,9 +21,9 @@
     <script src="web/task_queue.js"></script>
 
     <!-- Voice Activation Detection -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script> -->
     <script src="libs/ort.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/bundle.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script> -->
     <script src="libs/bundle.min.js"></script>
 
     <link rel="stylesheet" href="web/style.css">
@@ -34,6 +34,12 @@
         <button id="wsStatus">Disconnected</button>
         <button id="stateDisplay">Status: loading</button>
         <input type="text" id="wsUrl" placeholder="WebSocket URL">
+        <select id="configDropdown" aria-label="Configuration Selection">
+            <option value="">Select Configuration</option>
+        </select>
+        <select id="bgDropdown" aria-label="Background Selection">
+            <option value="">Select Background</option>
+        </select>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -140,6 +146,8 @@
         const wsUrl = document.getElementById('wsUrl');
         const interruptBtn = document.getElementById('interruptBtn');
         const micToggle = document.getElementById('micToggle');
+        const configDropdown = document.getElementById('configDropdown');
+        const bgDropdown = document.getElementById('bgDropdown');
 
         wsUrl.value = "ws://127.0.0.1:1017/client-ws";
         // if running on server
@@ -160,6 +168,8 @@
                 console.log("Connected to WebSocket");
                 wsStatus.textContent = "Connected";
                 wsStatus.classList.add('connected');
+                fetchConfigurations();
+                fetchBackgrounds();
             };
 
             ws.onclose = function () {
@@ -229,11 +239,79 @@
                 case "listExpressions":
                     console.log(listSupportedExpressions());
                     break;
+                case "config-files":
+                    populateConfigDropdown(message.files);
+                    break;
+                case "config-switched":
+                    console.log(message.message);
+                    document.getElementById("message").textContent = "Configuration switched successfully!";
+                    setState("idle");
+
+                    // restore the mic state before switching config
+                    if (micStateBeforeConfigSwitch) {
+                        start_mic();
+                    }
+                    micStateBeforeConfigSwitch = null;  // reset the state
+                    break;
+                case "background-files":
+                    populateBgDropdown(message.files);
+                    break;
                 default:
                     console.error("Unknown message type: " + message.type);
                     console.log(message);
             }
         }
+
+        function fetchConfigurations() {
+            ws.send(JSON.stringify({ type: "fetch-configs" }));
+        }
+
+        function fetchBackgrounds() {
+            ws.send(JSON.stringify({ type: "fetch-backgrounds" }));
+        }
+
+        function populateConfigDropdown(files) {
+            configDropdown.innerHTML = '<option value="">Select Configuration</option>';
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                configDropdown.appendChild(option);
+            });
+        }
+
+        function populateBgDropdown(files) {
+            bgDropdown.innerHTML = '<option value="">Select Background</option>';
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                bgDropdown.appendChild(option);
+            });
+        }
+
+        configDropdown.addEventListener('change', function () {
+            const selectedConfig = configDropdown.value;
+            if (selectedConfig) {
+                setState("switching-config");
+                document.getElementById("message").textContent = "Switching configuration...";
+                // avoid the mic being on when switching config
+                micStateBeforeConfigSwitch = micToggleState;
+                if (micToggleState) {
+                    stop_mic();
+                }
+
+                interrupt();
+                ws.send(JSON.stringify({ type: "switch-config", file: selectedConfig }));
+            }
+        });
+
+        bgDropdown.addEventListener('change', function () {
+            const selectedBg = bgDropdown.value;
+            if (selectedBg) {
+                document.body.style.backgroundImage = `url('./bg/${selectedBg}')`;
+            }
+        });
 
         // set expression of the model2
         // @param {int} expressionIndex - the expression index defined in the emotionMap in modelDict.js

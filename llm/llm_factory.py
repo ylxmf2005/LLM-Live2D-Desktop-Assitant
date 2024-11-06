@@ -30,7 +30,7 @@ class LLMFactory:
                 max_history_cnt=kwargs.get("MAX_HISTORY_CNT", -1),                
             )
         elif llm_provider == "mem0":
-            from llm.mem0 import LLM as Mem0LLM
+            from llm.mem0_llm import LLM as Mem0LLM
             return Mem0LLM(
                 user_id=kwargs.get("USER_ID"),
                 system=kwargs.get("SYSTEM_PROMPT"),

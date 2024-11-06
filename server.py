@@ -28,7 +28,7 @@ class WebSocketServer:
         server_ws_clients (List[WebSocket]): List of connected WebSocket clients for "/server-ws".
     """
 
-    def __init__(self, open_llm_vtuber_config: Dict | None = None, web : bool = False):
+    def __init__(self, open_llm_vtuber_main_config: Dict | None = None, web=False):
         """
         Initializes the WebSocketServer with the given configuration.
         """
@@ -37,14 +37,56 @@ class WebSocketServer:
         self.new_connected_clients: List[WebSocket] = []
         self.connected_clients: List[WebSocket] = []
         self.server_ws_clients: List[WebSocket] = []
-        self.open_llm_vtuber: OpenLLMVTuberMain | None = None
-        self.open_llm_vtuber_config: Dict | None = open_llm_vtuber_config
-        
+        self.open_llm_vtuber_main_config: Dict | None = open_llm_vtuber_main_config
         self._setup_routes()
         if web:
             self._mount_static_files()
         self.app.include_router(self.router)
         
+
+    def _initialize_components(
+        self, websocket: WebSocket, loop
+    ) -> tuple[Live2dModel, OpenLLMVTuberMain, AudioPayloadPreparer]:
+        """
+        Initialize or reinitialize all necessary components with current configuration.
+
+        Args:
+            websocket: The WebSocket connection to send messages through
+
+        Returns:
+            tuple: (Live2dModel instance, OpenLLMVTuberMain instance, AudioPayloadPreparer instance)
+        """
+        l2d = Live2dModel(self.open_llm_vtuber_main_config["LIVE2D_MODEL"])
+        open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_main_config, loop=loop)
+        audio_preparer = AudioPayloadPreparer()
+
+        # Set up the audio playback function
+        def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath: str | None = None) -> None:
+            if filepath is None:
+                print("No audio to be streamed. Response is empty.")
+                return
+
+            if sentence is None:
+                sentence = ""
+            print(f">> Playing {filepath}...")
+            payload, duration = audio_preparer.prepare_audio_payload(
+                audio_path=filepath,
+                instrument_path=instrument_filepath,
+                display_text=sentence,
+                expression_list=l2d.extract_emotion(sentence),
+            )
+            print("Payload send.")
+
+            async def _send_audio():
+                await websocket.send_text(json.dumps(payload))
+                await asyncio.sleep(duration)
+
+            asyncio.run_coroutine_threadsafe(_send_audio(), loop)
+
+            print("Audio played.")
+
+        open_llm_vtuber.set_audio_output_func(_play_audio_file)
+        return l2d, open_llm_vtuber, audio_preparer
 
     def _setup_routes(self):
         """Sets up the WebSocket and broadcast routes."""
@@ -66,37 +108,9 @@ class WebSocketServer:
 
             self.connected_clients.append(websocket)
             print("Connection established")
-            l2d = Live2dModel(self.open_llm_vtuber_config["LIVE2D_MODEL"])
-            open_llm_vtuber = OpenLLMVTuberMain(self.open_llm_vtuber_config, loop = loop)
-            audio_payload_preparer = AudioPayloadPreparer()
 
-            def _play_audio_file(sentence: str | None, filepath: str | None, instrument_filepath : str | None = None) -> None:
-                if filepath is None:
-                    print("No audio to be streamed. Response is empty.")
-                    return
-
-                if sentence is None:
-                    sentence = ""
-                print(f">> Playing {filepath}...")
-
-                payload, duration = audio_payload_preparer.prepare_audio_payload(
-                    audio_path=filepath,
-                    instrument_path=instrument_filepath,
-                    display_text=sentence,
-                    expression_list=l2d.extract_emotion(sentence),
-                )
-                print("Payload send.")
-
-                async def _send_audio():
-                    await websocket.send_text(json.dumps(payload))
-                    await asyncio.sleep(duration)
-
-                asyncio.run_coroutine_threadsafe(_send_audio(), loop)
-
-
-                print("Audio played.")
-
-            open_llm_vtuber.set_audio_output_func(_play_audio_file)
+            # Initialize components
+            l2d, open_llm_vtuber, _ = self._initialize_components(websocket, loop)
 
             await websocket.send_text(
                 json.dumps({"type": "set-model", "text": l2d.model_info})
@@ -175,12 +189,83 @@ class WebSocketServer:
                                 print(f"Conversation was interrupted. {e}")
 
                         conversation_task = asyncio.create_task(_run_conversation())
+                    elif data.get("type") == "fetch-configs":
+                        config_files = self._scan_config_alts_directory()
+                        await websocket.send_text(
+                            json.dumps({"type": "config-files", "files": config_files})
+                        )
+                    elif data.get("type") == "switch-config":
+                        config_file = data.get("file")
+                        if config_file:
+                            new_config = self._load_config_from_file(config_file)
+                            if new_config:
+                                # Update configuration
+                                self.open_llm_vtuber_main_config.update(new_config)
+
+                                # Reinitialize components with new configuration
+                                l2d, open_llm_vtuber, _ = self._initialize_components(
+                                    websocket
+                                )
+
+                                # Send confirmation and model info
+                                await websocket.send_text(
+                                    json.dumps(
+                                        {
+                                            "type": "config-switched",
+                                            "message": f"Switched to config: {config_file}",
+                                        }
+                                    )
+                                )
+                                await websocket.send_text(
+                                    json.dumps(
+                                        {"type": "set-model", "text": l2d.model_info}
+                                    )
+                                )
+                                print(f"Configuration switched to {config_file}")
+                    elif data.get("type") == "fetch-backgrounds":
+                        bg_files = self._scan_bg_directory()
+                        await websocket.send_text(
+                            json.dumps({"type": "background-files", "files": bg_files})
+                        )
                     else:
                         print("Unknown data type received.")
 
             except WebSocketDisconnect:
                 self.connected_clients.remove(websocket)
                 open_llm_vtuber = None
+
+    def _scan_config_alts_directory(self) -> List[str]:
+        config_files = ["conf.yaml"]  # default config file
+        config_alts_dir = self.open_llm_vtuber_main_config.get(
+            "CONFIG_ALTS_DIR", "config_alts"
+        )
+        for root, _, files in os.walk(config_alts_dir):
+            for file in files:
+                if file.endswith(".yaml"):
+                    config_files.append(file)
+        return config_files
+
+    def _load_config_from_file(self, filename: str) -> Dict:
+        if filename == "conf.yaml":  # default config file
+            return load_config_with_env("conf.yaml")
+        
+        config_alts_dir = self.open_llm_vtuber_main_config.get(
+            "CONFIG_ALTS_DIR", "config_alts"
+        )
+        file_path = os.path.join(config_alts_dir, filename)
+        if not os.path.exists(file_path):
+            return None
+        with open(file_path, "r", encoding="utf-8") as file:
+            return yaml.safe_load(file)
+
+    def _scan_bg_directory(self) -> List[str]:
+        bg_files = []
+        bg_dir = os.path.join("static", "bg")
+        for root, _, files in os.walk(bg_dir):
+            for file in files:
+                if file.endswith((".jpg", ".jpeg", ".png", ".gif")):
+                    bg_files.append(file)
+        return bg_files
 
     def _mount_static_files(self):
         """Mounts static file directories."""
@@ -199,9 +284,11 @@ class WebSocketServer:
 
         uvicorn.run(self.app, host=host, port=port, log_level=log_level)
 
+    @staticmethod
     def clean_cache():
+        """Clean the cache directory by removing and recreating it."""
         cache_dir = "./cache"
-        if os.path.exists(cache_dir):
+        if (os.path.exists(cache_dir)):
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir)
 
@@ -251,6 +338,6 @@ if __name__ == "__main__":
     config["LIVE2D"] = True  # make sure the live2d is enabled
     
     # Initialize and run the WebSocket server
-    server = WebSocketServer(open_llm_vtuber_config=config, web=args.web)
+    server = WebSocketServer(open_llm_vtuber_main_config=config, web=args.web)
     server.run(host=config["HOST"], port=config["PORT"])
 
