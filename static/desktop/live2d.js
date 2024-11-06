@@ -17,30 +17,6 @@ window.live2dModule = (function () {
     }
 
     async function loadModel(modelInfo = {}) {
-        // modelInfo["emotionMap"] = {
-        //     "neutral": 0,
-        //     "disdainful": 1,
-        //     "disgust": 1,
-        //     "sad": 2,
-        //     "worry": 2,
-        //     "confusion": 3,
-        //     "anger": 4,
-        //     "surprise": 5,
-        //     "expectation": 5,
-        //     "joy": 6,
-        //     "excitement": 7,
-        //     "pride": 8,
-        //     "shy": 9,
-        //     "dumfounded": 10,
-        //     "dizzy": 10,
-        //     "embarrassed": 11,
-        //     "nonchalant": 11,
-        //     "play_cool": 12,
-        //     "drink_tea": 13
-        // };
-        // modelInfo["url"] = "live2d-models/LSS/LSS.model3.json";
-        // modelInfo["kScale"] = 0.0003;
-
         emoMap = modelInfo["emotionMap"];
 
         if (model2) {

@@ -204,7 +204,7 @@ class WebSocketServer:
 
                                 # Reinitialize components with new configuration
                                 l2d, open_llm_vtuber, _ = self._initialize_components(
-                                    websocket
+                                    websocket, loop
                                 )
 
                                 # Send confirmation and model info

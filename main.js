@@ -1,21 +1,45 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage} = require('electron');
-const path = require('path');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage } = require('electron');
 const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 let mainWindow;
 let tray = null;
-
+let contextMenu; 
+let currentConfigFile = '';
+let configFiles = [];
 const isMac = process.platform === 'darwin';
 
-const contextMenu = Menu.buildFromTemplate([
-  { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
-  { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
-  { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
-  { label: 'Wake-up', type: 'checkbox', checked: true, click: (menuItem) => toggleWakeUp(menuItem.checked) },
-  { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
-  { type: 'separator' },
-  { label: 'Quit', click: () => app.quit() },
-]);
+configFiles = [];
+
+function updateContextMenu() {
+  const configMenuItems = configFiles.map(configFile => {
+    return {
+      label: configFile,
+      type: 'radio',
+      checked: configFile === currentConfigFile,
+      click: () => switchConfig(configFile)
+    };
+  });
+
+  contextMenu = Menu.buildFromTemplate([
+    { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
+    { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
+    { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
+    { label: 'Wake-up', type: 'checkbox', checked: true, click: (menuItem) => toggleWakeUp(menuItem.checked) },
+    { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
+    {
+      label: 'Switch Config',
+      submenu: configMenuItems
+    },
+    { type: 'separator' },
+    { label: 'Quit', click: () => app.quit() },
+  ]);
+
+  if (tray) {
+    tray.setContextMenu(contextMenu);
+  }
+}
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -64,12 +88,16 @@ function createTray() {
   if (isMac) {
     trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
     tray = new Tray(trayIcon);
-  }
-  else {
+  } else {
     tray = new Tray(iconPath);
   }
   tray.setToolTip('Elaina');
-  tray.setContextMenu(contextMenu);
+
+  if (!contextMenu) {
+    updateContextMenu();
+  } else {
+    tray.setContextMenu(contextMenu);
+  }
 }
 
 function toggleSubtitles(isChecked) {
@@ -97,8 +125,9 @@ function toggleMinimize(isChecked) {
   }
 }
 
-function toggleWakeUp(isChecked) {
-  mainWindow.webContents.send('toggle-wake-up', isChecked);
+function switchConfig(configFile) {
+  currentConfigFile = configFile;
+  mainWindow.webContents.send('switch-config', configFile);
 }
 
 app.on('ready', () => {
@@ -172,4 +201,9 @@ ipcMain.on('update-menu-checked', (event, label, checked) => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(contextMenu.items));
     tray.setContextMenu(contextMenu);
   }
+});
+
+ipcMain.on('update-config-files', (event, files) => {
+  configFiles = files;
+  updateContextMenu();
 });

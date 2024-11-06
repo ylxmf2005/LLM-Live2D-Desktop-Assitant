@@ -22,28 +22,32 @@ window.sendAudioPartition = sendAudioPartition;
 window.ws = null;
 
 function connectWebSocket() {
-    window.ws = new WebSocket("ws://127.0.0.1:1017/client-ws");
+    return new Promise((resolve, reject) => {
+        window.ws = new WebSocket("ws://127.0.0.1:1017/client-ws");
 
-    window.ws.onopen = function () {
-        setState("idle");
-        console.log("Connected to WebSocket");
-    };
+        window.ws.onopen = function () {
+            setState("idle");
+            console.log("Connected to WebSocket");
+            resolve();
+        };
 
-    window.ws.onclose = function () {
-        setState("idle");
-        console.log("Disconnected from WebSocket");
-        if (window.audioTaskQueue) {
-            window.audioTaskQueue.clearQueue();
-        }
-    };
+        window.ws.onclose = function () {
+            setState("idle");
+            console.log("Disconnected from WebSocket");
+            if (window.audioTaskQueue) {
+                window.audioTaskQueue.clearQueue();
+            }
+        };
 
-    window.ws.onmessage = function (event) {
-        handleMessage(JSON.parse(event.data));
-    };
+        window.ws.onmessage = function (event) {
+            handleMessage(JSON.parse(event.data));
+        };
 
-    window.ws.onerror = function (error) {
-        console.error("WebSocket error:", error);
-    };
+        window.ws.onerror = function (error) {
+            console.error("WebSocket error:", error);
+            reject(error);
+        };
+    });
 }
 
 function handleMessage(message) {
@@ -97,13 +101,45 @@ function handleMessage(message) {
         case "listExpressions":
             console.log(listSupportedExpressions());
             break;
+        case "config-files":
+            console.log("Received config files");
+            window.electronAPI.sendConfigFiles(message.files);
+            break;
+        case "config-switched":
+            console.log(message.message);
+            break;        
         default:
             console.error("Unknown message type: " + message.type);
             console.log(message);
     }
 }
-window.handleMessage = handleMessage;
 
-connectWebSocket();
+function fetchConfigurations() {
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        window.ws.send(JSON.stringify({ type: "fetch-configs" }));
+        console.log("Fetching configurations");
+    } else {
+        console.error("WebSocket is not open. Cannot fetch configurations.");
+    }
+}
+
+function switchConfig(configFile) {
+    window.ws.send(JSON.stringify({ type: "switch-config", file: configFile }));
+}
+
+window.handleMessage = handleMessage;
+window.switchConfig = switchConfig;
+window.fetchConfigurations = fetchConfigurations;
+
+async function initialize() {
+    try {
+        await connectWebSocket();
+        fetchConfigurations();
+    } catch (error) {
+        console.error("Failed to initialize:", error);
+    }
+}
+
+initialize();
 
 window.connectWebSocket = connectWebSocket;

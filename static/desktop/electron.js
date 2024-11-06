@@ -28,6 +28,10 @@ window.electronAPI.onToggleInterruption((isChecked) => {
     window.voiceInterruptionOn = isChecked;
 });
 
+window.electronAPI.onSwitchConfig((configFile) => {
+   window.switchConfig(configFile);
+});
+
 let isMouseOverModel = false;
 
 // document.addEventListener('mousemove', (event) => {

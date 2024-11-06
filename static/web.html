@@ -66,10 +66,6 @@
 
         const stateDisplay = document.getElementById('stateDisplay');
 
-        live2dModule.init().then(() => {
-            live2dModule.loadModel(null);
-        });
-
         function updateStateDisplay() {
             stateDisplay.textContent = `Status: ${state}`;
         }
@@ -231,10 +227,10 @@
                     }
                     break;
                 case "set-model":
-                    // console.log("set-model: ", message.text);
-                    // live2dModule.init().then(() => {
-                    //     live2dModule.loadModel(message.text);
-                    // });
+                    console.log("set-model: ", message.text);
+                    live2dModule.init().then(() => {
+                         live2dModule.loadModel(message.text);
+                    });
                     break;
                 case "listExpressions":
                     console.log(listSupportedExpressions());
