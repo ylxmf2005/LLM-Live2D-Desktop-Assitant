@@ -1,6 +1,8 @@
 # LLM-Live2D-Desktop-Assitant
 
-Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and make the following modifications / new features:
+### 🤗Introduction
+
+Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and made the following modifications / new features:
 
 - Integrate with Electron to be the **desktop partner**. The desktop-mode supports both Windows and MacOS.
 - Add **screen sensing** function and **clipboard content retrieval**.
@@ -12,7 +14,7 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mak
 - Add **singing functionality** using [Retrieval-based-Voice-Conversion](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI).
 - Add **computer use** function using Claude API.
 
-### Demo
+### 👀Demo
 
 The demo video does not reflect the latest version.
 
@@ -29,10 +31,19 @@ https://github.com/user-attachments/assets/58785339-34eb-4d5c-9413-f0e9f5810be0
 
 https://github.com/user-attachments/assets/badca04a-5ece-478c-a175-5e4bc3f563df
 
-
 https://github.com/user-attachments/assets/81c6cfb7-63cc-4983-a541-6dcaace1ad3c
 
-### Usage
+### ⚠️Statement
+
+To use this project, it is recommended to have at least basic Python programming skills. 
+
+Please refer carefully to the original project's [Wiki](https://github.com/t41372/Open-LLM-VTuber).
+
+For usage details and customization, you might need to consult the relevant project documentation (if you require corresponding components) and read or modify this project's code.
+
+Due to copyright issues, some models used in this project will not be made public.
+
+### 🛠️Usage
 
 ##### GPTSoVITS (if needed)
 - Download the [Elaina GPTSoVITS model](https://www.bilibili.com/video/BV1Df421m7bm/).
@@ -61,7 +72,7 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 - `python server.py --web`
 
 
-### To Do List
+### 📋To Do List
 - Sync with the upstream repository (Continuous work).
 - Use smarter algorithms to detect if the user has stopped speaking.
 - Enhance the UI by adding input field, chat history.
@@ -69,7 +80,7 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 - Allow the LLM to access the Internet.
 
 
-### Acknowledgement
+### 👏Acknowledgement
 
 - Thank [t41372](https://github.com/t41372)  for the  [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber).
 
