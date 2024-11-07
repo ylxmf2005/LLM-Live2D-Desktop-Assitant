@@ -1,4 +1,4 @@
-# YourElaina
+# LLM-Live2D-Desktop-Assitant
 
 Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and make the following modifications / new features:
 
