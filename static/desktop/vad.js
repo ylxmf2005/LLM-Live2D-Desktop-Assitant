@@ -106,7 +106,7 @@ async function start_wake_word_detection() {
     console.log("Starting wake word detection...");
     isWaitingForWakeWord = true;
     
-    accessKey = "hwvMbvBHNquLW3tCDyYGf8F03uApjfYWJPN8uOz4knCQs6ErQ0r2mw=="
+    accessKey = ""
     try {
         porcupine = await PorcupineWeb.PorcupineWorker.create(
             accessKey,

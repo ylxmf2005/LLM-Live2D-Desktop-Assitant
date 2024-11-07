@@ -16,7 +16,9 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mad
 
 ### 👀Demo
 
-The demo video does not reflect the latest version.
+The demo videos don't reflect the latest version. 
+
+The leaked API keys in these videos also don't work.
 
 https://github.com/user-attachments/assets/030bff1b-63a2-4b43-848b-a0c5b9db6f42
 
@@ -37,11 +39,11 @@ https://github.com/user-attachments/assets/81c6cfb7-63cc-4983-a541-6dcaace1ad3c
 
 To use this project, it is recommended to have at least basic Python programming skills. 
 
-Please refer carefully to the original project's [Wiki](https://github.com/t41372/Open-LLM-VTuber).
+Please refer carefully to the original project's [Wiki](https://github.com/t41372/Open-LLM-VTuber/wiki).
 
 For usage details and customization, you might need to consult the relevant project documentation (if you require corresponding components) and read or modify this project's code.
 
-Due to copyright issues, some models used in this project will not be made public.
+Due to copyright issues, some models used in this project will not be public.
 
 ### 🛠️Usage
 
@@ -58,7 +60,7 @@ Due to copyright issues, some models used in this project will not be made publi
 - `pip install requirements.txt` 
 - Modify `conf.yaml` according to your needs.
 
-For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTuber).
+For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTuber/wiki).
 
 ##### Wake-up (if needed)
 - Obtain your [Picovoice](https://console.picovoice.ai/) access key.

@@ -68,7 +68,7 @@ def record_audio(duration: int, sample_rate: int) -> np.ndarray:
     return audio.flatten()
 
 if __name__ == "__main__":
-    api_key = "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"
+    api_key = ""
     duration = 5
     sample_rate = 16000
 
