@@ -13,10 +13,13 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mad
 - Add a **voice wake-up** feature. Elaina enters a sleep mode after a certain period (10s) of inactivity following each conversation chain. She can be reactivated using the wake word "Elaina".
 - Add **singing functionality** using [Retrieval-based-Voice-Conversion](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI).
 - Add **computer use** function using Claude API.
+- Support **packaging** the frontend as an exe or dmg.
 
 ### 👀Demo
 
-The demo video does not reflect the latest version.
+The demo videos don't reflect the latest version. 
+
+The leaked API keys in these videos also don't work.
 
 https://github.com/user-attachments/assets/030bff1b-63a2-4b43-848b-a0c5b9db6f42
 
@@ -37,11 +40,11 @@ https://github.com/user-attachments/assets/81c6cfb7-63cc-4983-a541-6dcaace1ad3c
 
 To use this project, it is recommended to have at least basic Python programming skills. 
 
-Please refer carefully to the original project's [Wiki](https://github.com/t41372/Open-LLM-VTuber).
+Please refer carefully to the original project's [Wiki](https://github.com/t41372/Open-LLM-VTuber/wiki).
 
 For usage details and customization, you might need to consult the relevant project documentation (if you require corresponding components) and read or modify this project's code.
 
-Due to copyright issues, some models used in this project will not be made public.
+Due to copyright issues, some models used in this project will not be public.
 
 ### 🛠️Usage
 
@@ -51,22 +54,31 @@ Due to copyright issues, some models used in this project will not be made publi
 - run `runtime\python.exe api_v2.py`. 
 
 ##### DeepLX (if needed)
-- Launch [DeepLX](https://github.com/OwO-Network/DeepLX) server if you want Elaina to say Japanese (Because the model's responses usually use thesame language as the system prompt/user's input), you can run `docker run -itd -p 1188:1188  ghcr.io/owo-network/deeplx:latest`.
+- Launch [DeepLX](https://github.com/OwO-Network/DeepLX) server if you want Elaina to say Japanese (Because the model's responses usually use the same language as the system prompt/user's input), you can run `docker run -itd -p 1188:1188  ghcr.io/owo-network/deeplx:latest`.
 
 ##### Environment Configuration
 - `git clone https://github.com/ylxmf2005/YourElaina` 
 - `pip install requirements.txt` 
 - Modify `conf.yaml` according to your needs.
 
-For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTuber).
+For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTuber/wiki).
 
 ##### Wake-up (if needed)
 - Obtain your [Picovoice](https://console.picovoice.ai/) access key.
 - Set the `accessKey` in `static/desktop/vad.js` to your own access key.
 
-##### Desktop-mode
+##### Desktop-mode (Dev, recommended)
 - `npm install`
-- `npm start` or `npm run build`
+- `npm start` 
+
+**Desktop-mode (Build, to get exe on Windows, dmg on macOS)**
+
+- `npm install`
+- `npm run build`, the executable file (frontend) will be generated in `dist/`
+- `python server.py` to start backend service (Due to flexibility and environment management, packaging backend is not supported)
+- Open the executable file
+
+Tip: To deploy the frontend and backend in different device, you need to modify `window.ws = new WebSocket("ws://127.0.0.1:1017/client-ws");` in `static/desktop/websocket.js` to your server's address and port (which can be set in `conf.yaml`).
 
 ##### Web-mode
 - `python server.py --web`
@@ -74,6 +86,8 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 
 ### 📋To Do List
 - Sync with the upstream repository (Continuous work).
+- Add timbre recognition function.
+- Move computer functions to electron.
 - Use smarter algorithms to detect if the user has stopped speaking.
 - Enhance the UI by adding input field, chat history.
 - Add more expressions and poses like random idle poses. 

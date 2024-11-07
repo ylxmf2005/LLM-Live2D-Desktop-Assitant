@@ -21,6 +21,8 @@ window.live2dModule = (function () {
 
         if (model2) {
             app.stage.removeChild(model2);
+            model2.destroy({ children: true, texture: true, baseTexture: true });
+            model2 = null;
         }
 
         const options = {

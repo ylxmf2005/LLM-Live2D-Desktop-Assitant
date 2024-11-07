@@ -24,3 +24,4 @@ pillow
 PyAutoGUI
 zhipuai
 colorama
+pyinstaller

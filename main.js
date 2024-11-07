@@ -3,14 +3,22 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const isDevelopment = !app.isPackaged;
+let basePath;
+if (isDevelopment) {
+  basePath = __dirname;
+} else {
+  basePath = path.join(process.resourcesPath, 'app.asar.unpacked');
+}
+console.log('Base path is:', basePath);
+
 let mainWindow;
 let tray = null;
-let contextMenu; 
+let contextMenu;
 let currentConfigFile = '';
 let configFiles = [];
 const isMac = process.platform === 'darwin';
 
-configFiles = [];
 
 function updateContextMenu() {
   const configMenuItems = configFiles.map(configFile => {
@@ -59,7 +67,7 @@ function createWindow() {
     acceptFirstMouse: true,
     backgroundColor: '#00000000',
     webPreferences: {
-      preload: path.join(__dirname, 'static', 'desktop', 'preload.js'),
+      preload: path.join(basePath, 'static', 'desktop', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: true,
       enableRemoteModule: true,
@@ -67,7 +75,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'static', 'desktop.html'));
+  mainWindow.loadFile(path.join(basePath, 'static', 'desktop.html'));
   // mainWindow.webContents.openDevTools();
 
   if (isMac) mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -84,7 +92,9 @@ function createWindow() {
 }
 
 function createTray() {
-  let iconPath = path.join(__dirname, 'static', 'pictures', 'icon.png');
+  let iconPath = path.join(basePath, 'static', 'pictures', 'icon.png');
+  let trayIcon;
+
   if (isMac) {
     trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
     tray = new Tray(trayIcon);
@@ -99,6 +109,7 @@ function createTray() {
     tray.setContextMenu(contextMenu);
   }
 }
+
 
 function toggleSubtitles(isChecked) {
   mainWindow.webContents.send('toggle-subtitles', isChecked);
@@ -131,10 +142,16 @@ function switchConfig(configFile) {
 }
 
 app.on('ready', () => {
-  startBackend();
-  setTimeout(() => {
+  
+  if (isDevelopment) {
+    startBackend();
+    setTimeout(() => {
+      createWindow();
+    }, 3000);
+  }
+  else {
     createWindow();
-  }, 3000);
+  }
 });
 
 app.on('window-all-closed', function () {
@@ -150,14 +167,18 @@ app.on('activate', function () {
 });
 
 app.on('will-quit', () => {
-  stopBackend();
+  if (isDevelopment) stopBackend();
 });
 
+
+
 function startBackend() {
-  const pythonExecutable = 'python';
-  const scriptPath = path.join(__dirname, 'server.py');
+  pythonExecutable = "python"
+
+  const scriptPath = path.join(basePath, 'server.py');
+
   backendProcess = spawn(pythonExecutable, [scriptPath], {
-    cwd: __dirname,
+    cwd: basePath,
     env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
   });
 
@@ -173,6 +194,7 @@ function startBackend() {
     process.stdout.write(`${code}`);
   });
 }
+
 
 function stopBackend() {
   if (backendProcess) {

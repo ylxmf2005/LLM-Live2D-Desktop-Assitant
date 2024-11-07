@@ -18,5 +18,27 @@
     "@picovoice/porcupine-web": "^3.0.3",
     "@picovoice/web-voice-processor": "^4.0.9",
     "mic": "^2.1.2"
+  },
+  "build": {
+    "appId": "com.ethanlee.elaina",
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "static/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "**/static/**"
+    ]
   }
 }
