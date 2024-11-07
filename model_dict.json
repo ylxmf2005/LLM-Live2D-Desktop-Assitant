@@ -132,5 +132,92 @@
             "play_cool" : 12,
             "drink_tea" : 13
         }
+    },
+    {
+        "name": "Nahida",
+        "description": "Nahida",
+        "url": "live2d-models/Nahida/草神.model3.json",
+        "kScale": 0.00010,
+        "idleMotionGroupName": "idle",
+        "emotionMap": {
+            "黑": 0,
+            "脸红": 1,
+            "生气": 2,
+            "星星": 3,
+            "泪": 4,
+            "姿势1": 5,
+            "姿势2": 6,
+            "姿势3": 7,
+            "叶子": 8,
+            "发光": 9
+        }
+    },
+    {
+        "name": "Firefly",
+        "description": "Firefly",
+        "url": "live2d-models/FireFly/Firefly.model3.json",
+        "kScale": 0.00010,
+        "idleMotionGroupName": "动作组",
+        "emotionMap": {
+           "expression1": 0,
+           "expression10": 1,
+           "expression2": 2,
+           "expression3": 3,
+           "expression4": 4,
+           "expression5": 5,
+           "expression6": 6,
+           "expression7": 7,
+           "expression8": 8,
+           "expression9": 9,
+           "Scene02": 10,
+           "Scene22": 11,
+           "Scene26710": 12,
+           "Scene0": 13,
+           "Scene1": 14,
+           "Scene2": 15,
+           "Scene3": 16,
+           "Scene4": 17,
+           "Scene5": 18,
+           "Scene6": 19,
+           "Scene7": 20
+        }
+    },
+    {
+        "name": "Nahida2",
+        "description": "Nahida2",
+        "url": "live2d-models/Nahida2/Nahida.model3.json",
+        "kScale": 0.00010,
+        "idleMotionGroupName": "idle",
+        "emotionMap": {
+            "Angry": 0,
+            "Halfeyes": 1,
+            "HandChange": 2,
+            "Happy1": 3,
+            "Sad1": 4,
+            "Sad2": 5,
+            "black": 6,
+            "kusa": 7,
+            "mouthchange": 8,
+            "shy_normal": 9,
+            "Shy": 10,
+            "StarEye": 11,
+            "Wink": 12
+        }
+    },
+    {
+        "name": "Furina",
+        "description": "Furina",
+        "url": "live2d-models/Furina/Furina.model3.json",
+        "kScale": 0.0002,
+        "idleMotionGroupName": "idle",
+        "emotionMap": {
+            "-_-": 0,
+            "0_0": 1,
+            "BuOu": 2,
+            "HaiXiu": 3,
+            "HeiLian": 4,
+            "O": 5,
+            "XingXing": 6
+        }
     }
 ]

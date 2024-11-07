@@ -14,7 +14,23 @@ Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and mak
 
 ### Demo
 
-https://github.com/user-attachments/assets/a709bfcb-75d5-467d-94c3-609a61e75a63
+The demo video does not reflect the latest version.
+
+https://github.com/user-attachments/assets/030bff1b-63a2-4b43-848b-a0c5b9db6f42
+
+https://github.com/user-attachments/assets/77157c00-5be8-4f99-b549-b13ad113be52
+
+
+https://github.com/user-attachments/assets/491714cd-5d59-44f4-b100-b4a89ca1d9e2
+
+
+https://github.com/user-attachments/assets/58785339-34eb-4d5c-9413-f0e9f5810be0
+
+
+https://github.com/user-attachments/assets/badca04a-5ece-478c-a175-5e4bc3f563df
+
+
+https://github.com/user-attachments/assets/81c6cfb7-63cc-4983-a541-6dcaace1ad3c
 
 ### Usage
 
