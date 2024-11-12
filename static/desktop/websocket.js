@@ -89,6 +89,7 @@ function handleMessage(message) {
                 console.log("Audio playback intercepted. Sentence:", message.text);
             } else {
                 window.addAudioTask(message.audio, message.instrument, message.volumes, message.slice_length, message.text, message.expressions);
+                window.setExpression(0);
             }
             break;
         case "set-model":

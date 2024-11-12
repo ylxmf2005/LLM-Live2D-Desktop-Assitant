@@ -72,7 +72,7 @@ class Live2dModel:
         self.live2d_model_name = model_name
 
         try:
-            with open(self.model_dict_path, "r") as file:
+            with open(self.model_dict_path, "r", encoding="utf-8") as file:
                 model_dict = json.load(file)
         except FileNotFoundError as file_e:
             print(f"Model dictionary file not found at {self.model_dict_path}.")

@@ -7,8 +7,11 @@ import json
 import uuid
 from typing import Iterator
 import asyncio
+import platform
 import time
-from .computer_utils import get_clipboard_content, copy_selected_content, control_computer as utils_control_computer, input_text as utils_input_text
+from .computer_utils import get_clipboard_content, copy_selected_content, input_text as utils_input_text
+if platform.system() == 'Darwin':
+    from .computer_utils import control_computer as utils_control_computer
 import re
 
 class ConversationManager:
@@ -430,6 +433,11 @@ class ConversationManager:
         
     async def control_computer(self, sentence):
         print("computer control mode activated")
+        
+        if platform.system() != 'Darwin':
+            self.audio_manager.play_text("This system is currently not supported.")
+            return
+        
         try:
             data = json.loads(sentence)
             instruction = data.get("computer_control")

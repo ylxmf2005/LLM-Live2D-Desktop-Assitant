@@ -9,64 +9,65 @@ import asyncio
 import os
 import json
 import base64
-from computer.loop import sampling_loop, APIProvider
-from computer.tools import ToolResult
-from anthropic.types.beta import BetaMessage, BetaMessageParam
-from anthropic import APIResponse
 import pyautogui
 import ctypes
 import time
 
-async def control_computer(api_key: str, instruction: str, api_response_callback=None):
-    messages: list[BetaMessageParam] = [
-        {
-            "role": "user",
-            "content": instruction,
-        }
-    ]
+if sys.platform == "darwin":
+    from computer.loop import sampling_loop, APIProvider
+    from computer.tools import ToolResult
+    from anthropic.types.beta import BetaMessage, BetaMessageParam
+    from anthropic import APIResponse
+    async def control_computer(api_key: str, instruction: str, api_response_callback=None):
+        messages: list[BetaMessageParam] = [
+            {
+                "role": "user",
+                "content": instruction,
+            }
+        ]
+        
+        provider = APIProvider.ANTHROPIC
     
-    provider = APIProvider.ANTHROPIC
-
-    # Define callbacks (you can customize these)
-    def output_callback(content_block):
-        if isinstance(content_block, dict) and content_block.get("type") == "text":
-            print("Assistant:", content_block.get("text"))
-
-    def tool_output_callback(result: ToolResult, tool_use_id: str):
-        if result.output:
-            print(f"> Tool Output [{tool_use_id}]:", result.output)
-        if result.error:
-            print(f"!!! Tool Error [{tool_use_id}]:", result.error)
-        if result.base64_image:
-            # Save the image to a file if needed
-            os.makedirs("cache", exist_ok=True)
-            image_data = result.base64_image
-            with open(f"cache/screenshot_{tool_use_id}.png", "wb") as f:
-                f.write(base64.b64decode(image_data))
-            print(f"Took screenshot screenshot_{tool_use_id}.png")
-
-    # If no api_response_callback is provided, use a default one
-    if api_response_callback is None:
-        def api_response_callback(response: APIResponse[BetaMessage]):
-            print(
-                "\n---------------\nAPI Response:\n",
-                json.dumps(json.loads(response.text)["content"], indent=4),  # type: ignore
-                "\n",
-            )
-
-    # Run the sampling loop
-    messages = await sampling_loop(
-        model="claude-3-5-sonnet-20241022",
-        provider=provider,
-        system_prompt_suffix="",
-        messages=messages,
-        output_callback=output_callback,
-        tool_output_callback=tool_output_callback,
-        api_response_callback=api_response_callback,
-        api_key=api_key,
-        only_n_most_recent_images=10,
-        max_tokens=4096,
-    )
+        # Define callbacks (you can customize these)
+        def output_callback(content_block):
+            if isinstance(content_block, dict) and content_block.get("type") == "text":
+                print("Assistant:", content_block.get("text"))
+    
+        def tool_output_callback(result: ToolResult, tool_use_id: str):
+            if result.output:
+                print(f"> Tool Output [{tool_use_id}]:", result.output)
+            if result.error:
+                print(f"!!! Tool Error [{tool_use_id}]:", result.error)
+            if result.base64_image:
+                # Save the image to a file if needed
+                os.makedirs("cache", exist_ok=True)
+                image_data = result.base64_image
+                with open(f"cache/screenshot_{tool_use_id}.png", "wb") as f:
+                    f.write(base64.b64decode(image_data))
+                print(f"Took screenshot screenshot_{tool_use_id}.png")
+    
+        # If no api_response_callback is provided, use a default one
+        if api_response_callback is None:
+            def api_response_callback(response: APIResponse[BetaMessage]):
+                print(
+                    "\n---------------\nAPI Response:\n",
+                    json.dumps(json.loads(response.text)["content"], indent=4),  # type: ignore
+                    "\n",
+                )
+    
+        # Run the sampling loop
+        messages = await sampling_loop(
+            model="claude-3-5-sonnet-20241022",
+            provider=provider,
+            system_prompt_suffix="",
+            messages=messages,
+            output_callback=output_callback,
+            tool_output_callback=tool_output_callback,
+            api_response_callback=api_response_callback,
+            api_key=api_key,
+            only_n_most_recent_images=10,
+            max_tokens=4096,
+        )
 
 
 def get_clipboard_content():

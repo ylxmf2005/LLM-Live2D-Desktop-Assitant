@@ -9,6 +9,7 @@ package-lock.json
 dist/
 static/live2d-models/
 config_alts/
+.sync/
 
 # macOS system files
 .DS_Store

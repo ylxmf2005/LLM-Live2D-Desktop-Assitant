@@ -23,13 +23,16 @@
     "appId": "com.ethanlee.elaina",
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "icon": "static/pictures/icon.icns"
     },
     "win": {
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "icon": "static/pictures/icon.ico",
+      "sign": false
     },
     "files": [
       "main.js",

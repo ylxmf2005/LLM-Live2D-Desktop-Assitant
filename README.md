@@ -48,6 +48,8 @@ Due to copyright issues, some models used in this project will not be public.
 
 ### 🛠️Usage
 
+Require python >= 3.11.
+
 ##### GPTSoVITS (if needed)
 - Download the [Elaina GPTSoVITS model](https://www.bilibili.com/video/BV1Df421m7bm/).
 - Download [GPT-SoVITS-v2-240821](https://github.com/RVC-Boss/GPT-SoVITS/releases/tag/20240821v2), and configure the `GPT_SoVITS/configs/tts_infer.yaml` according to the official document.
@@ -67,15 +69,32 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 - Obtain your [Picovoice](https://console.picovoice.ai/) access key.
 - Set the `accessKey` in `static/desktop/vad.js` to your own access key.
 
+##### Clipboard retrieval & Screen sensing (if needed)
+
+The feature is currently running on the backend computer and will be migrated to Electron in the future.
+
+Better to use with a snipping tool like Snipaste. Read `def get_prompt_and_image` in `module/conversation_manager.py` for details. 
+
+For screen sensing, please set your vllm in `conf.yaml.`
+
+##### Computer-use (if needed)
+
+The feature is currently running on the backend computer and will be migrated to Electron in the future.
+
+Experimental, only for MacOS. Set your `CLAUDE_API_KEY` in `conf.yaml`.
+
+Will support Windows in the future.
+
 ##### Desktop-mode (Dev, recommended)
 - `npm install`
 - `npm start` 
 
-**Desktop-mode (Build, to get exe on Windows, dmg on macOS)**
+##### Desktop-mode (Build, to get exe on Windows, dmg on macOS)
 
 - `npm install`
-- `npm run build`, the executable file (frontend) will be generated in `dist/`
-- `python server.py` to start backend service (Due to flexibility and environment management, packaging backend is not supported)
+- `npm run build`, the executable file (frontend) will be generated in `dist/`. 
+  - If you are using Windows, make sure the terminal running `npm run build` has administrative privileges.
+- `python server.py` to start backend service (Due to flexibility and environment management, packaging backend is not supported, but may be supported in the future)
 - Open the executable file
 
 Tip: To deploy the frontend and backend in different device, you need to modify `window.ws = new WebSocket("ws://127.0.0.1:1017/client-ws");` in `static/desktop/websocket.js` to your server's address and port (which can be set in `conf.yaml`).
@@ -86,8 +105,8 @@ Tip: To deploy the frontend and backend in different device, you need to modify 
 
 ### 📋To Do List
 - Sync with the upstream repository (Continuous work).
-- Add timbre recognition function.
 - Move computer functions to electron.
+- Add timbre recognition function.
 - Use smarter algorithms to detect if the user has stopped speaking.
 - Enhance the UI by adding input field, chat history.
 - Add more expressions and poses like random idle poses. 
