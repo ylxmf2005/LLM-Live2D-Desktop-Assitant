@@ -4,7 +4,7 @@ from .translate_interface import TranslateInterface
 class DeepLXTranslate(TranslateInterface):
 
     api_endpoint: str = "http://127.0.0.1:1188/v2/translate"
-    target_lang: str = "JP"
+    target_lang: str = "JA"
 
     def __init__(self, api_endpoint: str, target_lang: str):
         self.api_endpoint = api_endpoint

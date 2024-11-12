@@ -115,6 +115,9 @@ class Live2dModel:
         Returns:
             list: A list of values of the emotions found in the string. An empty list is returned if no emotions are found.
         """
+        
+        if self.emo_map is None:
+            return []
 
         expression_list = []
         str_to_check = str_to_check.lower()
@@ -150,6 +153,9 @@ class Live2dModel:
 
         lower_str = target_str.lower()
 
+        if self.emo_map is None:
+            return target_str
+        
         for key in self.emo_map.keys():
             lower_key = f"[{key}]".lower()
             while lower_key in lower_str:

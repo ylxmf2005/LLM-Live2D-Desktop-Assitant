@@ -1,6 +1,6 @@
+pyyaml
 requests
 websocket-client
-python-dotenv==1.0.0
 transformers
 rich
 loguru
@@ -9,7 +9,6 @@ pydub
 sounddevice
 soundfile
 playsound3
-faster_whisper
 scipy
 onnxruntime
 openai
@@ -25,3 +24,6 @@ PyAutoGUI
 zhipuai
 colorama
 pyinstaller
+faster_whisper
+chardet
+fish_audio_sdk

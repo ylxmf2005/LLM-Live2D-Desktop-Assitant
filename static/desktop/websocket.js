@@ -1,3 +1,4 @@
+let micStateBeforeConfigSwitch = null;
 window.state = "idle"; // idle, thinking-speaking, interrupted
 window.voiceInterruptionOn = true;
 window.fullResponse = ""; // full response from the server in one conversation chain
@@ -108,6 +109,13 @@ function handleMessage(message) {
             break;
         case "config-switched":
             console.log(message.message);
+            document.getElementById("message").textContent = "Configuration switched successfully!";
+            setState("idle");
+
+            if (micStateBeforeConfigSwitch) {
+                start_mic();
+            }
+            micStateBeforeConfigSwitch = null;  // reset the state
             break;        
         default:
             console.error("Unknown message type: " + message.type);
@@ -125,6 +133,14 @@ function fetchConfigurations() {
 }
 
 function switchConfig(configFile) {
+    setState("switching-config");
+    document.getElementById("message").textContent = "Switching configuration...";
+    
+    micStateBeforeConfigSwitch = micToggleState;
+    if (micToggleState) {
+        stop_mic();
+    }
+    window.interrupt();
     window.ws.send(JSON.stringify({ type: "switch-config", file: configFile }));
 }
 

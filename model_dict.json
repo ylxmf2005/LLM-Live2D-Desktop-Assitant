@@ -219,5 +219,15 @@
             "O": 5,
             "XingXing": 6
         }
+    },
+    {
+        "name": "Neuro",
+        "description": "Neuro",
+        "url": "live2d-models/Neuro/hiyori_pro_t11.model3.json",
+        "kScale": 0.00015,
+        "idleMotionGroupName": "Idle",
+        "emotionMap": {
+          
+        }
     }
 ]

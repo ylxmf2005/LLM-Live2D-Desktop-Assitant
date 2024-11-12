@@ -5,18 +5,15 @@ import requests
 
 class GPTSoVITSEngine(TTSInterface):
 
-    def __init__(self, ref_wav_path, prompt_text="", aux_ref_audio_paths=[], prompt_language="ja", text_language="ja"):
-        # Store parameters
+    def __init__(self, ref_wav_path, prompt_text, aux_ref_audio_paths, prompt_language, text_language, api_base_url = "http://127.0.0.1:9880"):
         self.ref_wav_path = Path(__file__).parent / ref_wav_path
         self.prompt_text = prompt_text
         self.aux_ref_audio_paths = [Path(__file__).parent / p for p in aux_ref_audio_paths]
         self.prompt_language = prompt_language
         self.text_language = text_language
 
-        # Set the base URL for the API
-        self.api_base_url = "http://127.0.0.1:9880"
+        self.api_base_url = api_base_url
 
-        # Settings for output file
         self.temp_audio_file = "temp"
         self.file_extension = "wav"
         self.new_audio_dir = "./cache"
@@ -43,13 +40,11 @@ class GPTSoVITSEngine(TTSInterface):
         output_path = Path(self.new_audio_dir) / f"{file_name}.{self.file_extension}"
 
         try:
-            # Prepare reference audio file
             ref_wav_file = self.ref_wav_path
             if not ref_wav_file.exists():
                 print(f"Reference WAV file not found: {ref_wav_file}")
                 return None
 
-            # Prepare auxiliary reference audio files
             aux_ref_files = []
             for p in self.aux_ref_audio_paths:
                 if p.exists():
@@ -57,7 +52,6 @@ class GPTSoVITSEngine(TTSInterface):
                 else:
                     print(f"Auxiliary reference file not found: {p}")
 
-            # Prepare parameters
             params = {
                 "text": text,
                 "text_lang": self.text_language,
@@ -81,16 +75,13 @@ class GPTSoVITSEngine(TTSInterface):
                 "media_type": "wav"
             }
 
-            # Send POST request
             url = f"{self.api_base_url}/tts"
             response = requests.post(url, json=params)
 
             if response.status_code == 200:
-                # Save the audio data to the output file
                 with open(output_path, 'wb') as f:
                     f.write(response.content)
             else:
-                # Handle error
                 print(f"Error in generating audio: {response.status_code} - {response.text}")
                 return None
 
@@ -99,17 +90,3 @@ class GPTSoVITSEngine(TTSInterface):
             return None
 
         return str(output_path)
-        
-if __name__ == "__main__":
-    ref_wav_path = "elaina1.wav"
-    aux_ref_audio_paths = ["elaina1.wav", "elaina2.wav"]
-    prompt_text = "魔女の旅旅をお買い上げになったあなたに、魔法のように時空を超えて、語りかける、麗しい声の少女は。"
-    text = "ふとした退屈な時間を埋めるくらいにはなるんじゃないでしょうか"
-
-    tts_engine = GPTSoVITSEngine(ref_wav_path, prompt_text, aux_ref_audio_paths, prompt_language='ja', text_language='ja')
-    output_path = tts_engine.generate_audio(text, file_name_no_ext="output")
-
-    if output_path:
-        print(f"Generated audio file saved at: {output_path}")
-    else:
-        print("Failed to generate audio.")

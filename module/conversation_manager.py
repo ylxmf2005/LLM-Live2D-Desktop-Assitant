@@ -141,8 +141,12 @@ class ConversationManager:
                 print(char, end="")
                 full_response += char
             print("\n")
-
-            tts_target_sentence = self.live2d.remove_emotion_keywords(full_response)
+            
+            if self.live2d:
+                tts_target_sentence = self.live2d.remove_emotion_keywords(full_response[0])
+            else:
+                tts_target_sentence = full_response[0]
+                
             if self.translator and self.config.get("TRANSLATE_AUDIO", False):
                 print("Translating...")
                 tts_target_sentence = self.translator.translate(tts_target_sentence)
@@ -179,6 +183,7 @@ class ConversationManager:
                         return None
                     
                     if char:
+                        # print(f"char: {char}", end="\n", flush=True)
                         print(char, end="", flush=True)
                         sentence_buffer += char
                         full_response[0] += char
@@ -259,7 +264,10 @@ class ConversationManager:
                         sentence_queue.put((None, None))
                         break
 
-                    tts_target_sentence = self.live2d.remove_emotion_keywords(sentence)
+                    if self.live2d:
+                        tts_target_sentence = self.live2d.remove_emotion_keywords(full_response[0])
+                    else:
+                        tts_target_sentence = full_response[0]
 
                     if self.translator and self.config.get("TRANSLATE_AUDIO", False):
                         print("Translating...")
@@ -342,6 +350,7 @@ class ConversationManager:
         consumer_thread.join()
 
         return full_response[0]
+    
 
     def check(self, text: str):
         if ("sing_song" in text and "}" in text):
