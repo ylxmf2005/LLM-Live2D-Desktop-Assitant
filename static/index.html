@@ -359,7 +359,7 @@
 
             audioTaskQueue.addTask(async () => {
                 playAudioLipSync(audio_base64, volumes, slice_length, text, expression_list);
-                await new Promise(resolve => setTimeout(resolve, audioLength));
+                await new Promise(resolve => setTimeout(resolve, audioLength + 100));
                 console.log(`3. Audio task ${text} completed`);
             });
         }
