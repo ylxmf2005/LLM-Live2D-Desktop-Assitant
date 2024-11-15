@@ -143,7 +143,7 @@ TTS_MODEL: "edgeTTS"
 # text to speech model options: 
 #   "AzureTTS", "pyttsx3TTS", "edgeTTS", "barkTTS", 
 #   "cosyvoiceTTS", "meloTTS", "piperTTS", "coquiTTS",
-#   "fishAPITTS"
+#   "fishAPITTS", "GPTSoVITS"
 
 # if on, whenever the LLM finish a sentence, the model will speak, instead of waiting for the full response
 # if turned on, the timing and order of the facial expression will be more accurate
@@ -221,6 +221,14 @@ coquiTTS:
   
   # Device to run model on ("cuda", "cpu", or leave empty for auto-detect)
   device: ""
+
+GPTSoVITS:
+  ref_wav_path: "" # Absolute path is recommended / Relative path under tts folder
+  prompt_text : "" 
+  aux_ref_audio_paths : [] # Absolute path is recommended / Relative path under tts folder
+  prompt_language: ""
+  text_language: "" # language of the text to be synthesized
+  api_base_url: "http://127.0.0.1:9880"
 
 #  ============== Translate (to only change the language for TTS) ==============
 # Like... you speak and read the subtitles in English, and the TTS speaks Japanese or that kind of things
