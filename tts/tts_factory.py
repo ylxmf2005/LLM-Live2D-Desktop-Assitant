@@ -83,6 +83,10 @@ class TTSFactory:
                 latency=kwargs.get("latency"),
                 base_url=kwargs.get("base_url"),
             )
+
+        elif engine_type == "GPTSoVITS":
+            from .GPTSoVITS import GPTSoVITSEngine
+            return GPTSoVITSEngine(**kwargs)
             
         else:
             raise ValueError(f"Unknown TTS engine type: {engine_type}")
