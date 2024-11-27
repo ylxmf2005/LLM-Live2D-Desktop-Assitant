@@ -22,6 +22,7 @@ lab.py
 
 # Virtual environment
 .conda
+conda
 
 # Sensitive data
 .env

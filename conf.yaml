@@ -1,8 +1,16 @@
-CONF_VERSION: "v0.3.0-alpha.1"
+CONF_VERSION: "v0.4.0-alpha.2"
 # Server
 PROTOCAL: "http://"
 HOST: "0.0.0.0"
 PORT: 1017
+
+# Server Settings
+SERVER:
+  # If true, ASR and TTS will be initialized when server starts and kept in memory
+  PRELOAD_MODELS: True
+
+# General settings
+REMOVE_SPECIAL_CHAR: True # remove special characters like emoji from audio generation
 
 #  ============== LLM Backend Settings ===================
 
@@ -126,12 +134,16 @@ Whisper:
   download_root: "asr/models"
   device: "cpu"
 
+# FunASR currently needs internet connection on launch
+# to download / check the models. You can disconnect the internet after initialization.
+# Or you can use Faster-Whisper for complete offline experience
 FunASR:
   # model_name: "iic/SenseVoiceSmall" # or "paraformer-zh"
   model_name: "iic/SenseVoiceSmall"
   vad_model: "fsmn-vad" # this is only used to make it works if audio is longer than 30s
   punc_model: "ct-punc" # punctuation model.
   device: "cpu"
+  disable_update: True # should we check FunASR updates everytime on launch
   ncpu: 4 # number of threads for CPU internal operations.
   hub: "ms" # ms (default) to download models from ModelScope. Use hf to download models from Hugging Face.
   use_itn: False
@@ -211,6 +223,18 @@ xTTS:
   api_url: "http://127.0.0.1:8020/tts_to_audio"
   speaker_wav: "female"
   language: "en"
+
+GPT_Sovits:
+  # put ref audio to root path of GPT-Sovits, or set the path here
+  api_url: "http://127.0.0.1:9880/tts"
+  text_lang: "zh"
+  ref_audio_path: "人类，我闻到了你身上散发出来的欧气。.wav"
+  prompt_lang: "zh"
+  prompt_text: "人类，我闻到了你身上散发出来的欧气。"
+  text_split_method: "cut5"
+  batch_size: "1"
+  media_type: "wav"
+  streaming_mode: "false"
 
 fishAPITTS:
   # The API key for the Fish TTS API.

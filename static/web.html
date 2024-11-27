@@ -18,7 +18,9 @@
     <!-- <script src="https://cdn.jsdelivr.net/gh/RaSan147/pixi-live2d-display@v0.5.0-ls-7/dist/index.min.js"></script> -->
     <script src="libs/index.min.js"></script>
 
-    <script src="web/task_queue.js"></script>
+
+
+    <script src="TaskQueue.js"></script>
 
     <!-- Voice Activation Detection -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script> -->
@@ -26,14 +28,19 @@
     <!-- <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script> -->
     <script src="libs/bundle.min.js"></script>
 
-    <link rel="stylesheet" href="web/style.css">
+    <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
     <div class="top-left">
         <button id="wsStatus">Disconnected</button>
         <button id="stateDisplay">Status: loading</button>
+        <button id="pointerInteractionBtn">👀 Pointer Interactive On</button>
         <input type="text" id="wsUrl" placeholder="WebSocket URL">
+        <div class="sensitivity-container">
+            <span class="sensitivity-label">Speech Prob. Threshold:</span>
+            <input type="number" id="speechProbThreshold" min="1" max="100" value="99" title="Speech Detection Confidence Level Threshold (%)">
+        </div>
         <select id="configDropdown" aria-label="Configuration Selection">
             <option value="">Select Configuration</option>
         </select>
@@ -45,15 +52,19 @@
     <canvas id="canvas"></canvas>
 
     <div class="bottom-container">
-        <div class="fixed-bottom" id="message"></div>
+        <div class="fixed-bottom">
+            <div id="message"></div>
+            <input type="text" id="textInput" class="hidden" placeholder="Type your message here...">
+        </div>
         <div class="control-buttons">
             <button id="micToggle">🎙️Mic is On</button>
-            <button id="interruptBtn">🖐️Voice Interruption On</button>
+            <button id="interruptBtn">❌Voice Interruption Off</button>
+            <button id="sendText">📝Show Text Input</button>
         </div>
     </div>
 
     <!-- <script src="./modelDict.js"></script> -->
-    <script src="web/live2d.js"></script>
+    <script src="./live2d.js"></script>
 
     <script>
         // idle: When the LLM is not thinking or speaking and is waiting for user input.
@@ -61,7 +72,7 @@
         // interrupted: When the LLM is interrupted by the user.
         let state = "idle"; // idle, thinking-speaking, interrupted
         let audioPlayer = new Audio();
-        let voiceInterruptionOn = true;
+        let voiceInterruptionOn = false;
         let fullResponse = ""; // full response from the server in one conversation chain
 
         const stateDisplay = document.getElementById('stateDisplay');
@@ -87,9 +98,12 @@
 
         let myvad;
         let previousTriggeredProbability = 0; // the possibility that triggered the last speech start
+        let speechProbThreshold = document.getElementById('speechProbThreshold');
+
         async function init_vad() {
             myvad = await vad.MicVAD.new({
-                preSpeechPadFrames: 10,
+                preSpeechPadFrames: 20,
+                positiveSpeechThreshold: speechProbThreshold.value / 100,
                 onSpeechStart: () => {
                     console.log("Speech start detected: " + previousTriggeredProbability);
                     if (state === "thinking-speaking") {
@@ -112,6 +126,8 @@
                 },
                 onSpeechEnd: (audio) => {
                     // audio: (Float32Array of audio samples at sample rate 16000)...
+                    // make sure the audio queue is empty before getting new ones
+                    audioTaskQueue.clearQueue();
 
                     if (!voiceInterruptionOn) {
                         stop_mic();
@@ -123,6 +139,16 @@
                 }
             });
         }
+
+        speechProbThreshold.addEventListener('change', async function() {
+            if (myvad) {
+                await myvad.pause();
+                await init_vad();
+                if (micToggleState) {
+                    await myvad.start();
+                }
+            }
+        });
 
         const chunkSize = 4096;
         async function sendAudioPartition(audio) {
@@ -136,6 +162,8 @@
             ws.send(JSON.stringify({ type: "mic-audio-end" }));
         }
 
+        // window.addEventListener('load', init_vad);
+
         // WebSocket connection
         let ws;
         const wsStatus = document.getElementById('wsStatus');
@@ -145,13 +173,12 @@
         const configDropdown = document.getElementById('configDropdown');
         const bgDropdown = document.getElementById('bgDropdown');
 
-        wsUrl.value = "ws://127.0.0.1:1017/client-ws";
+        wsUrl.value = "ws://127.0.0.1:12393/client-ws";
         // if running on server
         if (window.location.protocol.startsWith("http")) {
             console.log("Running on server");
             wsUrl.value = "/client-ws";
-        } else { 
-            // if running on local using file://
+        } else { // if running on local using file://
             console.log("Running on local");
         }
 
@@ -206,7 +233,6 @@
                             break;
                         case "conversation-chain-end":
                             setState("idle");
-                            setExpression(0);
                             if (!voiceInterruptionOn) {
                                 start_mic();
                             }
@@ -223,13 +249,14 @@
                     if (state == "interrupted") {
                         console.log("Audio playback intercepted. Sentence:", message.text);
                     } else {
-                        addAudioTask(message.audio, message.instrument, message.volumes, message.slice_length, message.text, message.expressions);
+                        addAudioTask(message.audio, message.volumes, message.slice_length, message.text, message.expressions);
+                        // playAudioLipSync(message.audio, message.volumes, message.slice_length, message.text, message.expressions);
                     }
                     break;
                 case "set-model":
                     console.log("set-model: ", message.text);
                     live2dModule.init().then(() => {
-                         live2dModule.loadModel(message.text);
+                        live2dModule.loadModel(message.text);
                     });
                     break;
                 case "listExpressions":
@@ -315,7 +342,28 @@
             expressionIndex = parseInt(expressionIndex);
             model2.internalModel.motionManager.expressionManager.setExpression(expressionIndex);
             console.info(`>> [x] -> Expression set to: (${expressionIndex})`);
-        }       
+        }
+
+        // [Deprecated] Check if the string contains an expression. If it does, set the expression of the model2.
+        // @param {string} str - the string to check
+        function checkStringForExpression(str) {
+            console.log("emo map: ", emoMap);
+            for (const key of Object.keys(emoMap)) {
+                if (str.toLowerCase().includes("[" + key + "]")) {
+                    console.info(">> [ ] <- add to exec queue: " + key + ", " + emoMap[key]);
+                    taskQueue.addTask(() => { setExpression(emoMap[key]); });
+                    taskQueue.addTask(() => { console.log("timing out..."); });
+                    // setExpression(emoMap[key]);
+                }
+            }
+        }
+        // [Deprecated] List all supported expressions
+        function listSupportedExpressions() {
+            emoMap = model2.internalModel.motionManager.expressionManager.emotionMap;
+            console.log(emoMap);
+        }
+
+
 
         function setMouth(mouthY) {
             if (typeof model2.internalModel.coreModel.setParameterValueById === 'function') {
@@ -325,8 +373,8 @@
             }
         }
 
-        audioTaskQueue = new TaskQueue(500); 
-        async function addAudioTask(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
+        audioTaskQueue = new TaskQueue(100); // 100ms delay between tasks
+        async function addAudioTask(audio_base64, volumes, slice_length, text = null, expression_list = null) {
             console.log(`1. Adding audio task ${text} to queue`);
 
             // calculate the total duration of the audio
@@ -334,7 +382,7 @@
             console.log(`2. Audio length: ${audioLength}`);
 
             audioTaskQueue.addTask(async () => {
-                playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text, expression_list);
+                playAudioLipSync(audio_base64, volumes, slice_length, text, expression_list);
                 await new Promise(resolve => setTimeout(resolve, audioLength));
                 console.log(`3. Audio task ${text} completed`);
             });
@@ -351,28 +399,23 @@
         }
 
 
-        function playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
+        function playAudioLipSync(audio_base64, volumes, slice_length, text = null, expression_list = null) {
+
             if (state === "interrupted") {
                 console.error("Audio playback blocked. Sentence:", text);
                 audioTaskQueue.clearQueue();
                 return;
             }
-           
+
             fullResponse += text;
             if (text) {
                 document.getElementById("message").textContent = text;
             }
-           
-            if (instrument_base64 != "None") {
-                const instrumentAudio = new Audio("data:audio/wav;base64," + instrument_base64);
-                instrumentAudio.play();
-            }
-           
+
             const displayExpression = expression_list ? expression_list[0] : null;
             console.log("Start playing audio: ", text);
-            model2.speak("data:audio/wav;base64," + audio_base64, { expression: displayExpression,   resetExpression: false });
+            model2.speak("data:audio/wav;base64," + audio_base64, { expression: displayExpression, resetExpression: false });
         }
-
 
         // Start the microphone. This will start the VAD and send audio to the server when speech is detected.
         // Once speech ends, the mic will pause.
@@ -404,35 +447,41 @@
         // Initialize WebSocket connection
         connectWebSocket();
 
-        // Triple-click functionality to toggle hidden UI elements
-        let clickCount = 0;
-        let clickTimer = null;
+        // Add this after other event listeners
+        const textInput = document.getElementById('textInput');
+        const sendText = document.getElementById('sendText');
 
-        function handleClick() {
-            clickCount++;
-
-            if (clickCount === 1) {
-                clickTimer = setTimeout(() => {
-                    clickCount = 0;
-                }, 500); 
-            }
-
-            if (clickCount === 3) {
-                toggleHiddenElements();
-
-                clickCount = 0;
-                clearTimeout(clickTimer);
-                clickTimer = null;
+        function handleTextSubmit() {
+            const text = textInput.value;
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                if (state === "thinking-speaking") {
+                    interrupt();
+                } else {
+                    console.log("😀👍 Not interrupted. Just normal conversation");
+                }
+                ws.send(JSON.stringify({
+                    type: "text-input",
+                    text: text
+                }));
+                textInput.value = '';
+                audioTaskQueue.clearQueue();
             }
         }
 
-        function toggleHiddenElements() {
-            document.querySelector('.top-left').classList.toggle('hidden');
-            document.querySelector('.bottom-container').classList.toggle('hidden');
-        }
+        // 修改发送按钮的点击事件为切换显示/隐藏
+        let textInputVisible = false;
+        sendText.addEventListener('click', function() {
+            textInputVisible = !textInputVisible;
+            textInput.classList.toggle('hidden');
+            sendText.textContent = textInputVisible ? "📝Hide Text Input" : "📝Show Text Input";
+        });
 
-        document.getElementById('canvas').addEventListener('click', handleClick);
-
+        // 添加回车键发送功能
+        textInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleTextSubmit();
+            }
+        });
     </script>
 </body>
 

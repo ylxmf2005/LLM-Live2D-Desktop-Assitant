@@ -1,7 +1,8 @@
 var app, model2;
 var modelInfo, emoMap;
+var pointerInteractionEnabled = true;
 
-const live2dModule = (function() {
+const live2dModule = (function () {
   const live2d = PIXI.live2d;
 
   async function init() {
@@ -22,7 +23,9 @@ const live2dModule = (function() {
     }
 
     const models = await Promise.all([
-      live2d.Live2DModel.from(modelInfo.url),
+      live2d.Live2DModel.from(modelInfo.url, {
+        autoInteract: window.pointerInteractionEnabled
+      }),
     ]);
 
     models.forEach((model) => {
@@ -37,7 +40,12 @@ const live2dModule = (function() {
     });
 
     model2 = models[0];
-    model2.x = app.view.width / 2 - model2.width / 2;
+
+    if (!modelInfo.initialXshift) modelInfo.initialXshift = 0;
+    if (!modelInfo.initialYshift) modelInfo.initialYshift = 0;
+
+    model2.x = app.view.width / 2 - model2.width / 2 + modelInfo["initialXshift"];
+    model2.y = app.view.height / 2 - model2.height / 2 + modelInfo["initialYshift"];
 
     // model2.on("hit", (hitAreas) => {
     //   if (hitAreas.includes("body")) {
@@ -77,3 +85,18 @@ const live2dModule = (function() {
     changeBackgroundImage
   };
 })();
+
+document.addEventListener('DOMContentLoaded', function () {
+  const pointerInteractionBtn = document.getElementById('pointerInteractionBtn');
+
+  pointerInteractionBtn.addEventListener('click', function () {
+    window.pointerInteractionEnabled = !window.pointerInteractionEnabled;
+    pointerInteractionBtn.textContent = window.pointerInteractionEnabled ? "👀 Pointer Interactive On" : "❌ Pointer Interactive Off";
+    model2.interactive = window.pointerInteractionEnabled;
+    if (!window.pointerInteractionEnabled) {
+      // attempt to reset the pointer interaction
+      model2.internalModel.focusController.targetX = 0;
+      model2.internalModel.focusController.targetY = 0;
+    }
+  });
+});
