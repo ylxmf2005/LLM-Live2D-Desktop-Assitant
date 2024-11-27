@@ -122,6 +122,8 @@
         "description": "Elaina",
         "url": "live2d-models/LSS/LSS.model3.json",
         "kScale": 0.0003,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "idle",
         "emotionMap": {
             "neutral": 0,
@@ -148,6 +150,8 @@
         "description": "Nahida",
         "url": "live2d-models/Nahida/草神.model3.json",
         "kScale": 0.00010,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "idle",
         "emotionMap": {
             "黑": 0,
@@ -167,6 +171,8 @@
         "description": "Firefly",
         "url": "live2d-models/FireFly/Firefly.model3.json",
         "kScale": 0.00010,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "动作组",
         "emotionMap": {
            "expression1": 0,
@@ -197,6 +203,8 @@
         "description": "Nahida2",
         "url": "live2d-models/Nahida2/Nahida.model3.json",
         "kScale": 0.00010,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "idle",
         "emotionMap": {
             "Angry": 0,
@@ -219,6 +227,8 @@
         "description": "Furina",
         "url": "live2d-models/Furina/Furina.model3.json",
         "kScale": 0.0002,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "idle",
         "emotionMap": {
             "-_-": 0,
@@ -235,6 +245,8 @@
         "description": "Neuro",
         "url": "live2d-models/Neuro/hiyori_pro_t11.model3.json",
         "kScale": 0.00015,
+        "initialXshift": 0,
+        "initialYshift": 0,
         "idleMotionGroupName": "Idle",
         "emotionMap": {
           

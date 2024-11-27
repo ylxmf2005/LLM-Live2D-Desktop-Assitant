@@ -33,9 +33,19 @@ function updateContextMenu() {
   contextMenu = Menu.buildFromTemplate([
     { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
     { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
-    { label: 'Allow Interruption', type: 'checkbox', checked: true, click: (menuItem) => toggleInterruption(menuItem.checked) },
+    { label: 'Allow Interruption', type: 'checkbox', checked: false, click: (menuItem) => toggleInterruption(menuItem.checked) },
     { label: 'Wake-up', type: 'checkbox', checked: true, click: (menuItem) => toggleWakeUp(menuItem.checked) },
     { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
+    {
+      label: 'Speech Sensitivity',
+      submenu: [
+        { label: 'Very High (70%)', type: 'radio', checked: false, click: () => setSensitivity(0.7) },
+        { label: 'High (80%)', type: 'radio', checked: false, click: () => setSensitivity(0.8) },
+        { label: 'Medium (90%)', type: 'radio', checked: true, click: () => setSensitivity(0.9) },
+        { label: 'Low (95%)', type: 'radio', checked: false, click: () => setSensitivity(0.95) },
+        { label: 'Very Low (99%)', type: 'radio', checked: false, click: () => setSensitivity(0.99) }
+      ]
+    },
     {
       label: 'Switch Config',
       submenu: configMenuItems
@@ -141,6 +151,10 @@ function switchConfig(configFile) {
   mainWindow.webContents.send('switch-config', configFile);
 }
 
+function setSensitivity(value) {
+  mainWindow.webContents.send('set-sensitivity', value);
+}
+
 app.on('ready', () => {
   
   if (isDevelopment) {
@@ -228,4 +242,14 @@ ipcMain.on('update-menu-checked', (event, label, checked) => {
 ipcMain.on('update-config-files', (event, files) => {
   configFiles = files;
   updateContextMenu();
+});
+
+ipcMain.on('update-sensitivity', (event, value) => {
+  const sensitivityMenu = contextMenu.items.find(item => item.label === 'Speech Sensitivity');
+  if (sensitivityMenu) {
+    const threshold = value * 100;
+    sensitivityMenu.submenu.items.forEach(item => {
+      item.checked = item.label.includes(`(${threshold}%)`);
+    });
+  }
 });

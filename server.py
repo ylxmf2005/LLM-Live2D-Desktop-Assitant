@@ -16,6 +16,7 @@ from starlette.websockets import WebSocketDisconnect
 from module.openllm_vtuber_main import OpenLLMVTuberMain
 from module.live2d_model import Live2dModel
 from tts.stream_audio import AudioPayloadPreparer
+import argparse
 
 
 class WebSocketServer:

@@ -81,6 +81,9 @@ class OpenLLMVTuberMain:
             self.config, self.llm, self.asr, self.tts, self.live2d, self.translator, self.audio_manager, self.interrupt_manager, self.claude_api_key, self.verbose, self.loop
         )
         
+        if "REMOVE_SPECIAL_CHAR" not in self.config:
+            self.config["REMOVE_SPECIAL_CHAR"] = True
+            
     def init_live2d(self):
         if not self.config.get("LIVE2D", False):
             return None

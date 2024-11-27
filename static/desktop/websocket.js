@@ -1,6 +1,6 @@
 let micStateBeforeConfigSwitch = null;
 window.state = "idle"; // idle, thinking-speaking, interrupted
-window.voiceInterruptionOn = true;
+window.voiceInterruptionOn = false;
 window.fullResponse = ""; // full response from the server in one conversation chain
 
 function setState(newState) {

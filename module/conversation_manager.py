@@ -265,16 +265,19 @@ class ConversationManager:
                         break
 
                     if self.live2d:
-                        tts_target_sentence = self.live2d.remove_emotion_keywords(full_response[0])
+                        tts_target_sentence = self.live2d.remove_emotion_keywords(sentence)
                     else:
-                        tts_target_sentence = full_response[0]
+                        tts_target_sentence = sentence
 
                     if self.translator and self.config.get("TRANSLATE_AUDIO", False):
-                        print("Translating...")
-                        tts_target_sentence = self.translator.translate(
-                            tts_target_sentence
-                        )
-                        print(f"Translated: {tts_target_sentence}")
+                        try:
+                            print("Translating...")
+                            tts_target_sentence = self.translator.translate(tts_target_sentence)
+                            print(f"Translated: {tts_target_sentence}")
+                        except Exception as e:
+                            print(f"Error translating: {e}")
+                            print(f"Text: {tts_target_sentence}")
+                            print("Skipping...")
 
                     audio_filepath = self.audio_manager.generate_audio_file(
                         tts_target_sentence, file_name_no_ext=f"temp-{idx}"

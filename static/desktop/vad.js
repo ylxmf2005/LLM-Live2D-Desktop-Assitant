@@ -1,6 +1,7 @@
 window.myvad = null;
 window.previousTriggeredProbability = 0;
 window.wakeWordDetectionOn = true;
+window.speechProbThreshold = 0.99;
 
 porcupine = null;
 isWaitingForWakeWord = false;
@@ -9,6 +10,7 @@ noSpeechTimeout = null;
 async function init_vad() {
     window.myvad = await vad.MicVAD.new({
         preSpeechPadFrames: 10,
+        positiveSpeechThreshold: window.speechProbThreshold,
         onSpeechStart: () => {
             console.log("Speech start detected: " + window.previousTriggeredProbability);
             if (window.state === "thinking-speaking") {
@@ -32,13 +34,13 @@ async function init_vad() {
             document.getElementById("message").textContent = "The LLM can't hear you.";
         },
         onSpeechEnd: (audio) => {
+            window.audioTaskQueue.clearQueue();
             if (!window.voiceInterruptionOn) {
                 window.stop_mic();
             }
             if (window.ws && window.ws.readyState === WebSocket.OPEN) {
                 window.sendAudioPartition(audio);
             }
-              
             resetNoSpeechTimeout();
         }
     });
@@ -172,6 +174,40 @@ window.addEventListener("beforeunload", async () => {
     if (porcupine) {
         await stop_wake_word_detection();
     }
+});
+
+window.updateSensitivity = async function(value) {
+    value = Math.max(1, Math.min(100, value));
+    window.speechProbThreshold = value / 100;
+    
+    if (window.myvad) {
+        const micWasActive = window.WebVoiceProcessor.WebVoiceProcessor.isRecording;
+        if (micWasActive) {
+            await window.myvad.pause();
+        }
+        await init_vad();
+        if (micWasActive) {
+            await window.myvad.start();
+        }
+    }
+    
+    const sensitivityInput = document.getElementById('speechProbThreshold');
+    if (sensitivityInput && sensitivityInput.value !== value.toString()) {
+        sensitivityInput.value = value;
+    }
+    window.electronAPI.updateSensitivity(value / 100);
+};
+
+window.electronAPI.setSensitivity((event, value) => {
+    const sensitivityInput = document.getElementById('speechProbThreshold');
+    if (sensitivityInput) {
+        sensitivityInput.value = Math.round(value * 100);
+        window.updateSensitivity(sensitivityInput.value);
+    }
+});
+
+document.getElementById('speechProbThreshold').addEventListener('change', function() {
+    window.updateSensitivity(this.value);
 });
 
 

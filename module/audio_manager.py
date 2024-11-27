@@ -1,5 +1,7 @@
 import re
 import uuid
+import unicodedata
+
 class AudioManager:
     def __init__(self, tts, live2d, translator, config, verbose=False):
         self.tts = tts
@@ -7,9 +9,31 @@ class AudioManager:
         self.translator = translator
         self.config = config
         self.verbose = verbose
+        self.remove_special_char = config.get("REMOVE_SPECIAL_CHAR", True)
         
     def clean_text(self, text: str) -> str:
-        return re.sub(r'[^\u4e00-\u9fffA-Za-z0-9,]', ' ', text)
+        text = re.sub(r'[^\u4e00-\u9fffA-Za-z0-9,]', ' ', text)
+        
+        if self.remove_special_char:
+            text = self.remove_special_characters(text)
+            
+        return text
+        
+    def remove_special_characters(self, text: str) -> str:
+        """Filter text to remove all non-letter, non-number, and non-punctuation characters."""
+        normalized_text = unicodedata.normalize("NFKC", text)
+
+        def is_valid_char(char: str) -> bool:
+            category = unicodedata.category(char)
+            return (
+                category.startswith("L")
+                or category.startswith("N")
+                or category.startswith("P")
+                or char.isspace()
+            )
+
+        filtered_text = "".join(char for char in normalized_text if is_valid_char(char))
+        return filtered_text
 
     def generate_audio_file(self, sentence: str, file_name_no_ext: str) -> str | None:
         """

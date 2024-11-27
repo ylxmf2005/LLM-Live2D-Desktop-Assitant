@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setIgnoreMouseEvents: (ignore) => ipcRenderer.send('set-ignore-mouse-events', ignore),
     showContextMenu: (x, y) => ipcRenderer.send('show-context-menu', x, y),
     updateMenuChecked: (label, checked) => ipcRenderer.send('update-menu-checked', label, checked),
+    setSensitivity: (callback) => ipcRenderer.on('set-sensitivity', callback),
+    updateSensitivity: (value) => ipcRenderer.send('update-sensitivity', value)
 });

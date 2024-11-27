@@ -32,6 +32,14 @@ window.electronAPI.onSwitchConfig((configFile) => {
    window.switchConfig(configFile);
 });
 
+window.electronAPI.onSetSensitivity((value) => {
+    const sensitivityInput = document.getElementById('speechProbThreshold');
+    if (sensitivityInput) {
+        sensitivityInput.value = Math.round(value * 100);
+        window.updateSensitivity(sensitivityInput.value);
+    }
+});
+
 let isMouseOverModel = false;
 
 // document.addEventListener('mousemove', (event) => {
