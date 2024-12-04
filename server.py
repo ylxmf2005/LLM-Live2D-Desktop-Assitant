@@ -24,26 +24,30 @@ class WebSocketServer:
     WebSocketServer initializes a FastAPI application with WebSocket endpoints and a broadcast endpoint.
 
     Attributes:
-        config (dict): Configuration dictionary.
         app (FastAPI): FastAPI application instance.
         router (APIRouter): APIRouter instance for routing.
         connected_clients (List[WebSocket]): List of connected WebSocket clients for "/client-ws".
-        server_ws_clients (List[WebSocket]): List of connected WebSocket clients for "/server-ws".
+        open_llm_vtuber_main_config (dict): Configuration dictionary.
     """
 
     def __init__(self, open_llm_vtuber_main_config: Dict | None = None, web=False):
         """
         Initializes the WebSocketServer with the given configuration.
+
+        Parameters:
+            open_llm_vtuber_main_config (dict): Configuration dictionary.
+            web (bool): Whether to mount static files.
         """
         self.app = FastAPI()
         self.router = APIRouter()
         self.connected_clients: List[WebSocket] = []
         self.open_llm_vtuber_main_config = open_llm_vtuber_main_config
 
-        # Initialize model manager
+        # Initialize model manager  
         self.preload_models = self.open_llm_vtuber_main_config.get("SERVER", {}).get(
             "PRELOAD_MODELS", False
         )
+        
         if self.preload_models:
             logger.info("Preloading ASR and TTS models...")
             logger.info(
@@ -73,7 +77,8 @@ class WebSocketServer:
 
                 self.open_llm_vtuber_main_config.update(new_config)
 
-                l2d, open_llm_vtuber, _ = self._initialize_components(websocket)
+                loop = asyncio.get_event_loop()
+                l2d, open_llm_vtuber, _ = self._initialize_components(websocket, loop)
 
                 await websocket.send_text(
                     json.dumps(
@@ -128,7 +133,9 @@ class WebSocketServer:
 
         # Set up the audio playback function
         def _websocket_audio_handler(
-            sentence: str | None, filepath: str | None
+            sentence: str | None, 
+            filepath: str | None,
+            instrument_filepath: str | None = None
         ) -> None:
             if filepath is None:
                 logger.info("No audio to be streamed. Response is empty.")
@@ -154,7 +161,11 @@ class WebSocketServer:
 
             logger.info("Audio played")
 
-        open_llm_vtuber.set_audio_output_func(_websocket_audio_handler)
+        open_llm_vtuber.set_audio_output_func(
+            lambda sentence, filepath, instrument_filepath=None: _websocket_audio_handler(
+                sentence, filepath, instrument_filepath
+            )
+        )
         return l2d, open_llm_vtuber, audio_preparer
 
     def _setup_routes(self):
@@ -216,10 +227,10 @@ class WebSocketServer:
                     elif data.get("type") == "mic-audio-data":
                         received_data_buffer = np.append(
                             received_data_buffer,
-                            np.array(
-                                list(data.get("audio").values()), dtype=np.float32
-                            ),
+                            np.array(list(data.get("audio").values()), dtype=np.float32),
                         )
+                        if data.get("clipboardData"):
+                            clipboard_data = data.get("clipboardData")
                         print("*", end="")
 
                     elif (
@@ -240,24 +251,21 @@ class WebSocketServer:
                         async def _run_conversation():
                             try:
                                 await websocket.send_text(
-                                    json.dumps(
-                                        {
-                                            "type": "control",
-                                            "text": "conversation-chain-start",
-                                        }
-                                    )
+                                    json.dumps({
+                                        "type": "control",
+                                        "text": "conversation-chain-start",
+                                    })
                                 )
                                 await asyncio.to_thread(
                                     open_llm_vtuber.conversation_chain,
                                     user_input=user_input,
+                                    clipboard_data=clipboard_data if "clipboard_data" in locals() else None
                                 )
                                 await websocket.send_text(
-                                    json.dumps(
-                                        {
-                                            "type": "control",
-                                            "text": "conversation-chain-end",
-                                        }
-                                    )
+                                    json.dumps({
+                                        "type": "control",
+                                        "text": "conversation-chain-end",
+                                    })
                                 )
                                 print("One Conversation Loop Completed")
                             except asyncio.CancelledError:

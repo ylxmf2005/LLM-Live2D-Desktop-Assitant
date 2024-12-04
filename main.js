@@ -34,7 +34,7 @@ function updateContextMenu() {
     { label: 'Show Subtitles', type: 'checkbox', checked: false, click: (menuItem) => toggleSubtitles(menuItem.checked) },
     { label: 'Microphone', type: 'checkbox', checked: true, click: (menuItem) => toggleMicrophone(menuItem.checked) },
     { label: 'Allow Interruption', type: 'checkbox', checked: false, click: (menuItem) => toggleInterruption(menuItem.checked) },
-    { label: 'Wake-up', type: 'checkbox', checked: true, click: (menuItem) => toggleWakeUp(menuItem.checked) },
+    { label: 'Wake-up', type: 'checkbox', checked: false, click: (menuItem) => toggleWakeUp(menuItem.checked) },
     { label: 'Hide', type: 'checkbox', checked: false, click: (menuItem) => toggleMinimize(menuItem.checked) },
     {
       label: 'Speech Sensitivity',
@@ -252,4 +252,31 @@ ipcMain.on('update-sensitivity', (event, value) => {
       item.checked = item.label.includes(`(${threshold}%)`);
     });
   }
+});
+
+ipcMain.handle('get-clipboard-content', async () => {
+    const content = {};
+    const { clipboard } = require('electron');
+    
+    try {
+        content.text = clipboard.readText() || '';
+        
+        const image = clipboard.readImage();
+        if (!image.isEmpty()) {
+            const scaledImage = image.resize({
+                width: 800,
+                height: 800,
+                quality: 'good'
+            });
+            content.image = scaledImage.toPNG().toString('base64');
+        } else {
+            content.image = null;
+        }
+    } catch (error) {
+        console.error('Error getting clipboard content:', error);
+        content.text = '';
+        content.image = null;
+    }
+    
+    return content;
 });

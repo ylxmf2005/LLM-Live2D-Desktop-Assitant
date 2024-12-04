@@ -34,4 +34,4 @@ class TaskQueue {
     }
 }
 
-const taskQueue = new TaskQueue()
+window.audioTaskQueue = new TaskQueue(20);

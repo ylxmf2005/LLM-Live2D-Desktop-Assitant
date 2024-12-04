@@ -1,18 +1,19 @@
 const chunkSize = 4096;
 
-window.audioTaskQueue = new TaskQueue(100);
-
 async function addAudioTask(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
     console.log(`1. Adding audio task ${text} to queue`);
-
-    const audioLength = await getAudioLength(audio_base64);
-    console.log(`2. Audio length: ${audioLength}`);
-
-    window.audioTaskQueue.addTask(async () => {
-        playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text, expression_list);
-        await new Promise(resolve => setTimeout(resolve, audioLength + 100));
-        window.resetNoSpeechTimeout();
-        console.log(`3. Audio task ${text} completed`);
+    
+    if (window.state === "interrupted") {
+        console.log("Skipping audio task due to interrupted state");
+        return;
+    }
+    
+    window.audioTaskQueue.addTask(() => {
+        return new Promise((resolve, reject) => {
+            playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text, expression_list, onComplete=resolve);
+        }).catch(error => {
+            console.log("Audio task error:", error);
+        });
     });
 }
 window.addAudioTask = addAudioTask;
@@ -27,10 +28,10 @@ async function getAudioLength(audio_base64) {
     });
 }
 
-function playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null) {
+function playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length, text = null, expression_list = null, onComplete) {
     if (window.state === "interrupted") {
-        console.error("Audio playback blocked. Sentence:", text);
-        window.audioTaskQueue.clearQueue();
+        console.error("Audio playback blocked. State:", window.state);
+        onComplete();
         return;
     }
 
@@ -46,8 +47,23 @@ function playAudioLipSync(audio_base64, instrument_base64, volumes, slice_length
 
     const displayExpression = expression_list ? expression_list[0] : null;
     console.log("Start playing audio: ", text);
-    if (window.model2 && typeof window.model2.speak === 'function') {
-        window.model2.speak("data:audio/wav;base64," + audio_base64, { expression: displayExpression, resetExpression: false });
+    
+    try {
+        window.model2.speak("data:audio/wav;base64," + audio_base64, {
+            expression: displayExpression,
+            resetExpression: true,
+            onFinish: () => {
+                console.log("Voiceline is over");
+                onComplete();
+            },
+            onError: (error) => {
+                console.error("Audio playback error:", error);
+                onComplete();
+            }
+        });
+    } catch (error) {
+        console.error("Speak function error:", error);
+        onComplete();
     }
 }
 window.playAudioLipSync = playAudioLipSync;

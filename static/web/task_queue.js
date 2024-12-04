@@ -31,9 +31,9 @@ class TaskQueue {
         }
         this.running = false;
         setTimeout(() => this.runNextTask(), this.taskInterval);
-        // this.runNextTask();
     }
 }
 
 // export default TaskQueue;
-const taskQueue = new TaskQueue()
+window.audioTaskQueue = new TaskQueue(20);
+

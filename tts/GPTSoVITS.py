@@ -6,9 +6,15 @@ import requests
 class GPTSoVITSEngine(TTSInterface):
 
     def __init__(self, ref_wav_path, prompt_text, aux_ref_audio_paths, prompt_language, text_language, api_base_url = "http://127.0.0.1:9880"):
-        self.ref_wav_path = Path(__file__).parent / ref_wav_path
+        if not Path(ref_wav_path).is_absolute():
+            self.ref_wav_path = Path(__file__).parent / ref_wav_path
+        else:
+            self.ref_wav_path = Path(ref_wav_path)
         self.prompt_text = prompt_text
-        self.aux_ref_audio_paths = [Path(__file__).parent / p for p in aux_ref_audio_paths]
+        self.aux_ref_audio_paths = [
+            Path(p) if Path(p).is_absolute() else Path(__file__).parent / p
+            for p in aux_ref_audio_paths
+        ]
         self.prompt_language = prompt_language
         self.text_language = text_language
 

@@ -10,13 +10,35 @@ function setState(newState) {
 window.setState = setState;
 
 async function sendAudioPartition(audio) {
-    console.log(audio);
-    for (let index = 0; index < audio.length; index += chunkSize) {
-        const endIndex = Math.min(index + chunkSize, audio.length);
-        const chunk = audio.slice(index, endIndex);
-        window.ws.send(JSON.stringify({ type: "mic-audio-data", audio: chunk }));
+    try {
+        let clipboardData = await window.electronAPI.getClipboardContent();
+        
+        for (let index = 0; index < audio.length; index += chunkSize) {
+            const endIndex = Math.min(index + chunkSize, audio.length);
+            const chunk = audio.slice(index, endIndex);
+            
+            const safeClipboardData = {
+                text: clipboardData?.text || '',
+                image: clipboardData?.image || null
+            };
+            
+            window.ws.send(JSON.stringify({ 
+                type: "mic-audio-data", 
+                audio: chunk,
+                clipboardData: safeClipboardData
+            }));
+        }
+        
+        window.ws.send(JSON.stringify({ 
+            type: "mic-audio-end",
+            clipboardData: {
+                text: clipboardData?.text || '',
+                image: clipboardData?.image || null
+            }
+        }));
+    } catch (error) {
+        console.error('Error sending audio partition:', error);
     }
-    window.ws.send(JSON.stringify({ type: "mic-audio-end" }));
 }
 window.sendAudioPartition = sendAudioPartition;
 
@@ -69,6 +91,7 @@ function handleMessage(message) {
                 case "conversation-chain-start":
                     setState("thinking-speaking");
                     window.fullResponse = "";
+                    window.audioTaskQueue = new TaskQueue(20);
                     break;
                 case "conversation-chain-end":
                     setState("idle");

@@ -1,7 +1,7 @@
 window.myvad = null;
 window.previousTriggeredProbability = 0;
-window.wakeWordDetectionOn = true;
-window.speechProbThreshold = 0.99;
+window.wakeWordDetectionOn = false;
+window.speechProbThreshold = 0.9;
 
 porcupine = null;
 isWaitingForWakeWord = false;
@@ -51,11 +51,20 @@ async function start_mic() {
         await stop_wake_word_detection();
     }
 
-    if (window.myvad == null) await init_vad();
-    console.log("Mic start");
-    window.myvad.start();
-    window.electronAPI.updateMenuChecked("Microphone", true);
-    resetNoSpeechTimeout();
+    try {
+        console.log("Mic start");
+        if (window.myvad == null) {
+            await init_vad();
+        }
+        await window.myvad.start();
+        window.electronAPI.updateMenuChecked("Microphone", true);
+        window.micToggleState = true;
+        resetNoSpeechTimeout();
+    } catch (error) {
+        console.error("Failed to start microphone:", error);
+        window.micToggleState = false;
+        window.electronAPI.updateMenuChecked("Microphone", false);
+    }
 }
 
 window.start_mic = start_mic;
@@ -68,7 +77,7 @@ async function stop_mic() {
     }
     window.electronAPI.updateMenuChecked("Microphone", false);
     clearNoSpeechTimeout();
-    
+    window.micToggleState = false;
     if (window.wakeWordDetectionOn)
         await start_wake_word_detection();
 }
@@ -108,7 +117,7 @@ async function start_wake_word_detection() {
     console.log("Starting wake word detection...");
     isWaitingForWakeWord = true;
     
-    accessKey = ""
+    accessKey = "/7gDUCElrddYzUegKQSEoe/ZQjH+sKU1KjcEnANpHdYQeLhc1WXrHQ=="
     try {
         porcupine = await PorcupineWeb.PorcupineWorker.create(
             accessKey,
@@ -150,6 +159,7 @@ function keywordDetectionCallback(detection) {
 }
 
 function resetNoSpeechTimeout() {
+    if (window.wakeWordDetectionOn === false) return;
     clearNoSpeechTimeout();
     noSpeechTimeout = setTimeout(() => {
         console.log("No speech detected for 15 seconds, stopping mic.");
@@ -209,5 +219,3 @@ window.electronAPI.setSensitivity((event, value) => {
 document.getElementById('speechProbThreshold').addEventListener('change', function() {
     window.updateSensitivity(this.value);
 });
-
-
