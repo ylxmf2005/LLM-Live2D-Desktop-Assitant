@@ -1,7 +1,7 @@
 window.myvad = null;
 window.previousTriggeredProbability = 0;
-window.wakeWordDetectionOn = true;
-window.speechProbThreshold = 0.99;
+window.wakeWordDetectionOn = false;
+window.speechProbThreshold = 0.9;
 
 porcupine = null;
 isWaitingForWakeWord = false;
@@ -55,6 +55,7 @@ async function start_mic() {
     console.log("Mic start");
     window.myvad.start();
     window.electronAPI.updateMenuChecked("Microphone", true);
+    window.micToggleState = true;
     resetNoSpeechTimeout();
 }
 
@@ -68,7 +69,7 @@ async function stop_mic() {
     }
     window.electronAPI.updateMenuChecked("Microphone", false);
     clearNoSpeechTimeout();
-    
+    window.micToggleState = false;
     if (window.wakeWordDetectionOn)
         await start_wake_word_detection();
 }
@@ -108,7 +109,7 @@ async function start_wake_word_detection() {
     console.log("Starting wake word detection...");
     isWaitingForWakeWord = true;
     
-    accessKey = ""
+    accessKey = "/7gDUCElrddYzUegKQSEoe/ZQjH+sKU1KjcEnANpHdYQeLhc1WXrHQ=="
     try {
         porcupine = await PorcupineWeb.PorcupineWorker.create(
             accessKey,
@@ -150,6 +151,7 @@ function keywordDetectionCallback(detection) {
 }
 
 function resetNoSpeechTimeout() {
+    if (window.wakeWordDetectionOn === false) return;
     clearNoSpeechTimeout();
     noSpeechTimeout = setTimeout(() => {
         console.log("No speech detected for 15 seconds, stopping mic.");
@@ -209,5 +211,3 @@ window.electronAPI.setSensitivity((event, value) => {
 document.getElementById('speechProbThreshold').addEventListener('change', function() {
     window.updateSensitivity(this.value);
 });
-
-

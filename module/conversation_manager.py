@@ -29,43 +29,22 @@ class ConversationManager:
         assert self.loop is not None, "loop is None"
         self.verbose = verbose
         self.heard_sentence = ""
-        self.functions = self.get_tool_functions()
+        # self.functions = self.get_tool_functions()
         
-    def get_prompt_and_image(self, user_input: str | np.ndarray | None = None, clipboard_mode : str = "auto") -> tuple[str, str | None]:
-        copy_keywords = ["选中", "選中", "选取", "選取", "select", "selected"]
-        direct_keywords = ["这张照片", "这张图片", "拷贝", "拷貝", "复制", "複製", "剪切", "剪貼", "剪贴", "剪貼", "截图", "截圖", "copy", "copied", "cut", "cutted", "screenshot", "snip"]
-        if clipboard_mode == "auto":
-            if any(keyword in user_input for keyword in copy_keywords):
-                clipboard_mode = "copy"
-            elif any(keyword in user_input for keyword in direct_keywords):
-                clipboard_mode = "direct"
-            else:
-                clipboard_mode = None
-                
-        clipboard_content = {}
-        if clipboard_mode == "copy":
-            copy_selected_content()
-            clipboard_content = get_clipboard_content()
-        elif clipboard_mode == "direct":
-            clipboard_content = get_clipboard_content()
-        elif clipboard_mode is None:
-            pass  
-        
-                
-        if "text" in clipboard_content:
-            if clipboard_mode == "direct":
-                user_input += f"\nThe text I selected(between two delimiter), assume you can see it on my screen:###\n{clipboard_content['text']}###\n"
-            else:
-                user_input += f"\nThe text I selected(between two delimiter), assume you can see it on my screen::###\n{clipboard_content['text']}###\n"
-        
+    def get_prompt_and_image(self, user_input: str | np.ndarray | None = None, clipboard_data: dict | None = None) -> tuple[str, str | None]:
         image_base64 = None
-        if "image" in clipboard_content:
-            image_base64 = clipboard_content["image"]
+        
+        if clipboard_data:
+            if "text" in clipboard_data:
+                user_input += f"\nThe text from my clipboard (between two delimiter):###\n{clipboard_data['text']}###\n"
             
+            if "image" in clipboard_data:
+                image_base64 = clipboard_data["image"]
+                
         return user_input, image_base64
         
 
-    def conversation_chain(self, user_input: str | np.ndarray | None = None,    clipboard_mode: str = "auto") -> str:
+    def conversation_chain(self, user_input=None, clipboard_data=None):
         if not self.interrupt_manager.wait_continue_flag(): 
             print(
                 ">> Execution flag not set. In interruption state for too long. Exiting     conversation chain."
@@ -95,7 +74,7 @@ class ConversationManager:
 
         print(f"User input: {user_input}")
 
-        prompt, image_base64 = self.get_prompt_and_image(user_input, clipboard_mode)
+        prompt, image_base64 = self.get_prompt_and_image(user_input, clipboard_data)
         
         chat_completion: Iterator[str] = self.llm.chat_iter(prompt, image_base64)
 
@@ -183,12 +162,10 @@ class ConversationManager:
                         return None
                     
                     if char:
-                        # print(f"char: {char}", end="\n", flush=True)
                         print(char, end="", flush=True)
                         sentence_buffer += char
                         full_response[0] += char
                         check_result = self.check(sentence_buffer)
-                        # print(f"check_result: {check_result}")
                         if check_result == "sing-song":
                             match = re.search(r'\{.*?\}', sentence_buffer)
                             if match:
@@ -196,33 +173,32 @@ class ConversationManager:
                                 sentence_buffer = re.sub(r'\{.*?\}', '', sentence_buffer)
                             else:
                                 print("Invalid JSON format in sing mode")
-                        elif check_result == "computer-control":
-                            match = re.search(r'\{.*?\}', sentence_buffer)
-                            if match:
-                                future = asyncio.run_coroutine_threadsafe(
-                                    self.control_computer(match.group(0)),
-                                    self.loop
-                                )
-                                try:
-                                    result = future.result() 
-                                except Exception as e:
-                                    print(f"Error running control_computer coroutine: {e}")
-                                sentence_buffer = re.sub(r'\{.*?\}', '', sentence_buffer)
-                            else:
-                                print("Invalid JSON format in computer control mode")
-                        elif check_result == "input-text":
-                            match = re.search(r'\[text_input_start\](.*?)\[text_input_end\]', sentence_buffer, re.DOTALL)
-                            if match:
-                                text_to_input = match.group(1)
-                                self.input_text(text_to_input)
-                                sentence_buffer = ""
-                            else:
-                                match = re.search(r'\[text_input_start\](.*)', sentence_buffer, re.DOTALL)
-                                if match:
-                                    text_to_input = match.group(1)
-                                    self.input_text(text_to_input)
-                                    sentence_buffer = "[text_input_start]"
-                                    
+                        # elif check_result == "computer-control":
+                        #     match = re.search(r'\{.*?\}', sentence_buffer)
+                        #     if match:
+                        #         future = asyncio.run_coroutine_threadsafe(
+                        #             self.control_computer(match.group(0)),
+                        #             self.loop
+                        #         )
+                        #         try:
+                        #             _ = future.result() 
+                        #         except Exception as e:
+                        #             print(f"Error running control_computer coroutine: {e}")
+                        #         sentence_buffer = re.sub(r'\{.*?\}', '', sentence_buffer)
+                        #     else:
+                        #         print("Invalid JSON format in computer control mode")
+                        # elif check_result == "input-text":
+                        #     match = re.search(r'\[text_input_start\](.*?)\[text_input_end\]', sentence_buffer, re.DOTALL)
+                        #     if match:
+                        #         text_to_input = match.group(1)
+                        #         self.input_text(text_to_input)
+                        #         sentence_buffer = ""
+                        #     else:
+                        #         match = re.search(r'\[text_input_start\](.*)', sentence_buffer, re.DOTALL)
+                        #         if match:
+                        #             text_to_input = match.group(1)
+                        #             self.input_text(text_to_input)
+                        #             sentence_buffer = "[text_input_start]"
                         elif check_result:
                             if self.verbose:
                                 print("\n")
@@ -356,64 +332,26 @@ class ConversationManager:
     
 
     def check(self, text: str):
-        if ("sing_song" in text and "}" in text):
+        """
+        Check if the text contains a tool call / is the end of a sentence.
+        """
+        if ("sing_song" in text and "}" in text): 
             return "sing-song"
         
-        if ("computer_control" in text and "}" in text):
-            return "computer-control"
+        # if ("computer_control" in text and "}" in text):
+        #     return "computer-control"
+        # if ("[text_input_start]" in text):
+        #     return False if text.count('[') >= 2 and text.count(']') < 2 else "input-text"
+
+        white_list = ["...", "Dr.", "Mr.", "Ms.", "Mrs.", "Jr.", "Sr.", "St.", "Ave.", "Rd.", 
+                     "Blvd.", "Dept.", "Univ.", "Prof.", "Ph.D.", "M.D.", "U.S.", "U.K.", 
+                     "U.N.", "E.U.", "U.S.A.", "U.K.", "U.S.S.R.", "U.A.E."]
         
-        if ("[text_input_start]" in text):
-            if text.count('[') >= 2 and text.count(']') < 2:
-                return False
-            return "input-text"
+        if any(text.strip().endswith(item) for item in white_list): 
+            return False
 
-        white_list = [
-            "...",
-            "Dr.",
-            "Mr.",
-            "Ms.",
-            "Mrs.",
-            "Jr.",
-            "Sr.",
-            "St.",
-            "Ave.",
-            "Rd.",
-            "Blvd.",
-            "Dept.",
-            "Univ.",
-            "Prof.",
-            "Ph.D.",
-            "M.D.",
-            "U.S.",
-            "U.K.",
-            "U.N.",
-            "E.U.",
-            "U.S.A.",
-            "U.K.",
-            "U.S.S.R.",
-            "U.A.E.",
-        ]
-
-        for item in white_list:
-            if text.strip().endswith(item):
-                return False
-
-        punctuation_blacklist = [
-            ".",
-            "?",
-            "!",
-            "。",
-            "；",
-            "？",
-            "！",
-            "…",
-            "〰",
-            "〜",
-            "～",
-            "！",
-        ]
-
-        return any(text.strip().endswith(punct) for punct in punctuation_blacklist) and not "sing_song" in text and not "computer_control" in text and not "input_text" in text
+        punctuation_blacklist = [".", "?", "!", "。", "；", "？", "！", "…", "〰", "〜", "～", "！"]
+        return any(text.strip().endswith(punct) for punct in punctuation_blacklist)  # and not "sing_song" in text and not "computer_control" in text and not "input_text" in text
 
     def sing_song(self, sentence):
         print("sing mode activated")
@@ -443,47 +381,47 @@ class ConversationManager:
             instrument_filepath = instrument_path
         )     
         
-    async def control_computer(self, sentence):
-        print("computer control mode activated")
+    # async def control_computer(self, sentence):
+    #     print("computer control mode activated")
         
-        if platform.system() != 'Darwin':
-            self.audio_manager.play_text("This system is currently not supported.")
-            return
+    #     if platform.system() != 'Darwin':
+    #         self.audio_manager.play_text("This system is currently not supported.")
+    #         return
         
-        try:
-            data = json.loads(sentence)
-            instruction = data.get("computer_control")
-        except json.JSONDecodeError:
-            print("Invalid JSON format in response")
-            return
+    #     try:
+    #         data = json.loads(sentence)
+    #         instruction = data.get("computer_control")
+    #     except json.JSONDecodeError:
+    #         print("Invalid JSON format in response")
+    #         return
         
-        print("computer control mode activated")
+    #     print("computer control mode activated")
         
-        async def api_response_callback(response):
-            data = json.loads(response.text)["content"]
-            # print(json.dumps(data, indent=4))
+    #     async def api_response_callback(response):
+    #         data = json.loads(response.text)["content"]
+    #         # print(json.dumps(data, indent=4))
             
-            for item in data:
-                if item["type"] == "text":
-                    text = item["text"]
-                    print(text)
-                    self.audio_manager.play_text(text)
+    #         for item in data:
+    #             if item["type"] == "text":
+    #                 text = item["text"]
+    #                 print(text)
+    #                 self.audio_manager.play_text(text)
         
-        await utils_control_computer(self.claude_api_key, instruction, api_response_callback)
+    #     await utils_control_computer(self.claude_api_key, instruction, api_response_callback)
         
-    def input_text(self, text):
-        # print("input text mode activated")
-        utils_input_text(text)
+    # def input_text(self, text):
+    #     # print("input text mode activated")
+    #     utils_input_text(text)
         
-    def get_tool_functions(self):
-        return {
-            "sing_song" : self.sing_song,
-            "control_computer" : self.control_computer
-        }
+    # def get_tool_functions(self):
+    #     return {
+    #         "sing_song" : self.sing_song,
+    #         "control_computer" : self.control_computer
+    #     }
         
-    def call_tool_function(self, function_name, *args):
-        if function_name in self.functions:
-            self.functions[function_name](*args)
-        else:
-            print(f"Function {function_name} not found")
+    # def call_tool_function(self, function_name, *args):
+    #     if function_name in self.functions:
+    #         self.functions[function_name](*args)
+    #     else:
+    #         print(f"Function {function_name} not found")
     

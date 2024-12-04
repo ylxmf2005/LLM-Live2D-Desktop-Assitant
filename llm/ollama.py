@@ -154,7 +154,7 @@ class LLM(LLMInterface):
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": image_base64 if "glm" in     self.v_model else f"data:image/jpeg;base64,{image_base64}"
+                                "url": image_base64 if "glm" in self.v_model else f"data:image/jpeg;base64,{image_base64}"
                             }
                         }
                     ]

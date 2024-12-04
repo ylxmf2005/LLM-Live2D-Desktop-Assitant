@@ -161,8 +161,11 @@ class OpenLLMVTuberMain:
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir)
 
-    def conversation_chain(self, user_input=None):
-        return self.conversation_manager.conversation_chain(user_input)
+    def conversation_chain(self, user_input=None, clipboard_data=None):
+        return self.conversation_manager.conversation_chain(
+            user_input=user_input, 
+            clipboard_data=clipboard_data
+        )
 
     def interrupt(self, heard_sentence: str = "") -> None:
         self.interrupt_manager.interrupt(heard_sentence)
