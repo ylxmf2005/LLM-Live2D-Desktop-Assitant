@@ -71,8 +71,6 @@ For more details, please read this [Wiki](https://github.com/t41372/Open-LLM-VTu
 
 ##### Clipboard retrieval & Screen sensing (if needed)
 
-The feature is currently running on the backend computer and will be migrated to Electron in the future.
-
 Better to use with a snipping tool like Snipaste. Read `def get_prompt_and_image` in `module/conversation_manager.py` for details. 
 
 For screen sensing, please set your vllm in `conf.yaml.`

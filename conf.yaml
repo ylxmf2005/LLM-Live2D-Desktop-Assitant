@@ -11,6 +11,8 @@ SERVER:
 
 # General settings
 REMOVE_SPECIAL_CHAR: True # remove special characters like emoji from audio generation
+CLAUDE_API_KEY: "" # For computer control  
+
 
 #  ============== LLM Backend Settings ===================
 
@@ -21,18 +23,29 @@ LLM_PROVIDER: "ollama"
 
 # Ollama & OpenAI Compatible inference backend
 ollama:
-  # BASE_URL: "http://localhost:11434"
-  # BASE_URL: "http://localhost:11434/v1"
-  BASE_URL: "https://api.deepseek.com/v1"
+  BASE_URL: ""
   LLM_API_KEY: ""
   ORGANIZATION_ID: "org_eternity"
   PROJECT_ID: "project_glass"
   ## LLM name
   #  MODEL: "llama3.1:latest"
-  MODEL: "deepseek-chat"
-  # MODEL: "qwen2.5:latest"
+  LLM_API_KEY: ""
+  # ORGANIZATION_ID: "org_eternity"
+  # PROJECT_ID: "project_glass"
+  MODEL: ""
+
+  V_BASE_URL: "" # Vision model
+  VLLM_API_KEY: ""
+  V_ORGANIZATION_ID: "org_eternity"
+  V_PROJECT_ID: "project_glass"
+  V_MODEL: ""
+  ## LLM name
+  # MODEL: "llama3.1:latest"  
   # system prompt is at the very end of this file
   VERBOSE: False
+  CLIPBOARD_HISTORY: False 
+  MAX_HISTORY_CNT: -1 # -1 means no limit
+  
 
 # Claude API Configuration
 claude:
@@ -107,7 +120,7 @@ MIC_IN_BROWSER: False # Deprecated and useless now. Do not enable it. Bad things
 
 # speech to text model options: "Faster-Whisper", "WhisperCPP", "Whisper", "AzureASR", "FunASR", "GroqWhisperASR"
 # ASR_MODEL: "Faster-Whisper"
-ASR_MODEL: "Faster-Whisper"
+ASR_MODEL: "GroqWhisperASR"
 
 AzureASR:
   api_key: "azure_api_key"
@@ -212,29 +225,16 @@ piperTTS:
 
 GPTSoVITS:
   ref_wav_path: "elaina2.wav" # The file needs to be placed in the tts dict.
-  # prompt_text : "魔女の旅旅をお買い上げになったあなたに、魔法のように時空を超えて、語りかける、麗しい声の少女は。" # prompt text for the reference audio
   prompt_text : "魔女の 度々 第21巻 ドラマ CD 付き特装版 魔女たちの小話"
   aux_ref_audio_paths : []  # auxiliary reference audio paths for multi-speaker tone fusion
-  # "elaina2.wav", "elaina3.wav"
   prompt_language: "ja"
   text_language: "ja" # language of the text to be synthesized
+  api_base_url: "http://127.0.0.1:9880"
 
 xTTS:
   api_url: "http://127.0.0.1:8020/tts_to_audio"
   speaker_wav: "female"
   language: "en"
-
-GPT_Sovits:
-  # put ref audio to root path of GPT-Sovits, or set the path here
-  api_url: "http://127.0.0.1:9880/tts"
-  text_lang: "zh"
-  ref_audio_path: "人类，我闻到了你身上散发出来的欧气。.wav"
-  prompt_lang: "zh"
-  prompt_text: "人类，我闻到了你身上散发出来的欧气。"
-  text_split_method: "cut5"
-  batch_size: "1"
-  media_type: "wav"
-  streaming_mode: "false"
 
 fishAPITTS:
   # The API key for the Fish TTS API.
@@ -272,8 +272,8 @@ TRANSLATE_AUDIO: False
 TRANSLATE_PROVIDER: "DeepLX"
 
 DeepLX:
-  # DEEPLX_TARGET_LANG: "JA"
-  DEEPLX_TARGET_LANG: "EN"
+  DEEPLX_TARGET_LANG: "JA"
+  # DEEPLX_TARGET_LANG: "EN"
   DEEPLX_API_ENDPOINT: "http://localhost:1188/v2/translate"
 
 #  ============== Other Settings ==============
