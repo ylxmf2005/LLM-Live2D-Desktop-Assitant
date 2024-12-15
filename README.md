@@ -1,5 +1,8 @@
 # LLM-Live2D-Desktop-Assitant
 
+### Notice
+I’m currently working on the reconstruction co-work of the upstream repository (Open-LLM-Vtuber). Once the foundational reconstruction is complete, this repository (Electron version) will be updated accordingly.
+
 ### 🤗Introduction
 
 Forked From [Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber) and made the following modifications / new features:
