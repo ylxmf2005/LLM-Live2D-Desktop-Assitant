@@ -597,3 +597,4 @@ if __name__ == "__main__":
     # Initialize and run the WebSocket server
     server = WebSocketServer(open_llm_vtuber_main_config=config)
     server.run(host=config["HOST"], port=config["PORT"])
+    
