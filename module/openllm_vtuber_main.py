@@ -74,8 +74,7 @@ class OpenLLMVTuberMain:
         
         self.interrupt_manager = InterruptManager(self.llm)
         
-        if self.config.get("CLAUDE_API_KEY"):
-            self.claude_api_key = self.config.get("CLAUDE_API_KEY")
+        self.claude_api_key = self.config.get("CLAUDE_API_KEY", None)
 
         self.conversation_manager = ConversationManager(
             self.config, self.llm, self.asr, self.tts, self.live2d, self.translator, self.audio_manager, self.interrupt_manager, self.claude_api_key, self.verbose, self.loop

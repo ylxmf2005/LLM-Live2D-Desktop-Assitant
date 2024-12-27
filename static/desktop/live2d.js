@@ -9,7 +9,7 @@ window.live2dModule = (function () {
             view: document.getElementById("canvas"),
             autoStart: true,
             resizeTo: window,
-            transparent: true,
+            // transparent: true,
             backgroundAlpha: 0,
         });
 
