@@ -1,7 +1,10 @@
 # LLM-Live2D-Desktop-Assitant
 
 ### Notice
-I’m currently working on the reconstruction co-work of the upstream repository (Open-LLM-Vtuber). Once the foundational reconstruction is complete, this repository (Electron version) will be updated accordingly.
+~~I’m currently working on the reconstruction co-work of the upstream repository (Open-LLM-Vtuber). Once the foundational reconstruction is complete, this repository (Electron version) will be updated accordingly.~~
+
+I may no longer update the repo because as I am transferring the Electron feature to the upstream repository. 
+You can directly utilize the desktop mode in the upstream repository.
 
 ### 🤗Introduction
 
